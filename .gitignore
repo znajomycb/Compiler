@@ -1,0 +1,23 @@
+/Properties/launchSettings.json
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+bin/
+Bin/
+obj/
+Obj/
+
+# LLVM
+*.tokens
+*.ll
+*.lst
+*.conflicts
+*.exe
+*.bat
