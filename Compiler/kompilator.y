@@ -14,7 +14,7 @@
 %token True False
 %token Assign
 %token Plus Minus Multiplies Divides
-%token Or And BitOr BitAnd Not BitNot
+%token Or And Not BitOr BitAnd BitNot
 %token Equal NotEqual Greater GreaterOrEqual Less LessOrEqual
 %token OpenRound CloseRound OpenCurly CloseCurly
 %token Comma SemiColon
@@ -24,6 +24,7 @@
 %type <type> block body
 %type <type> inst inst_s inst_block read write
 %type <type> declar type names
+%type <type> exp logic relat addit multip bit unary factor
 
 %%
 
@@ -101,10 +102,68 @@ read
     ;
 
 write   
-    :   Write Ident SemiColon
+    :   Write exp SemiColon
         {
-            Console.WriteLine("Writing identifier!");
+            Console.WriteLine("Writing expression!");
         }
+    ;
+
+exp 
+    :   logic Assign exp
+    |   logic
+    ;
+
+logic
+    :   logic Or relat
+    |   logic And relat
+    |   relat
+    ;
+
+relat
+    :   relat Equal addit
+    |   relat NotEqual addit
+    |   relat Greater addit
+    |   relat GreaterOrEqual addit
+    |   relat Less addit
+    |   relat LessOrEqual addit
+    |   addit
+    ;
+
+addit
+    :   addit Plus multip
+    |   addit Minus multip
+    |   multip
+    ;
+
+multip
+    :   multip Multiplies bit
+    |   multip Divides bit
+    |   bit
+    ;
+
+bit
+    :   bit BitOr unary
+    |   bit BitAnd unary
+    |   unary
+    ;
+
+unary   
+    :   Minus unary
+    |   Plus unary
+    |   BitNot unary
+    |   Not unary
+    |   OpenRound IntKeyword CloseRound unary
+    |   OpenRound DoubleKeyword CloseRound unary
+    |   factor
+    ;
+
+factor
+    :   OpenRound exp CloseRound 
+    |   Ident
+    |   IntNumber
+    |   DoubleNumber
+    |   True
+    |   False
     ;
 
 %%

@@ -6,7 +6,7 @@
 //
 //  GPLEX Version:  1.2.2
 //  Machine:  DESKTOP-UBLKNJO
-//  DateTime: 5/23/2021 17:52:33
+//  DateTime: 5/23/2021 23:34:41
 //  UserName: tourist
 //  GPLEX input file <.\kompilator.lex - 5/23/2021 17:19:49>
 //  GPLEX frame file <embedded resource>
