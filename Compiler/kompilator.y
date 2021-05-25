@@ -22,9 +22,11 @@
 %token Error
 
 %type <type> block body
-%type <type> inst inst_s inst_block read write
+%type <type> inst inst_s inst_block 
+%type <type> /*if*/ while read write return
 %type <type> declar type names
 %type <type> exp logic relat addit multip bit unary factor
+%type <type> statement instaa
 
 %%
 
@@ -39,13 +41,13 @@ start
 block   
     :   OpenCurly body CloseCurly
         {
-            Console.WriteLine("Here is block!");
+            Console.WriteLine("Here is the main block!");
             Console.WriteLine("Compilation successful\n");
             YYACCEPT;
         }
     |   OpenCurly CloseCurly
         {
-            Console.WriteLine("Here is empty block");
+            Console.WriteLine("Here is the empty main block");
             Console.WriteLine("Compilation successful\n");
             YYACCEPT;
         }
@@ -53,9 +55,9 @@ block
 
 body    
     :   body declar
-    |   body inst
+    |   body instaa
     |   declar
-    |   inst
+    |   instaa
     ;
 
 /* Declaration */
@@ -80,8 +82,20 @@ names
 
 inst
     :   inst_block
+    |   while
+    |   if
+    |   return
     |   read
     |   write
+    |   exp SemiColon
+    ;
+
+instaa
+    :   statement
+    ;
+
+statement
+    :   inst
     ;
 
 inst_s
@@ -92,6 +106,23 @@ inst_s
 inst_block
     :   OpenCurly inst_s CloseCurly { Console.WriteLine("inst block"); }
     |   OpenCurly CloseCurly { Console.WriteLine("Empty inst block"); }
+    ;
+
+/*statement: if
+         | inst
+         ;*/
+
+/*open_statement: If OpenRound exp CloseRound inst
+              | If OpenRound exp CloseRound inst Else inst
+              ;*/
+
+if
+    :   If OpenRound exp CloseRound inst { Console.WriteLine("If is here"); }
+    |   If OpenRound exp CloseRound inst Else inst { Console.WriteLine("if with else is here"); }
+    ;
+
+while 
+    :   While OpenRound exp CloseRound inst { Console.WriteLine("While is here"); }
     ;
 
 read    
@@ -108,8 +139,12 @@ write
         }
     ;
 
+return
+    :   Return SemiColon { Console.WriteLine("Return is here"); }
+    ;
+
 exp 
-    :   logic Assign exp
+    :   logic Assign exp { Console.WriteLine("Here is assigment"); }
     |   logic
     ;
 
