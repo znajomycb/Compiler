@@ -83,7 +83,7 @@ names
 inst
     :   inst_block
     |   while
-    |   if
+    /*|   if*/
     |   return
     |   read
     |   write
@@ -94,9 +94,9 @@ instaa
     :   statement
     ;
 
-statement
+/*statement
     :   inst
-    ;
+    ;*/
 
 inst_s
     : inst_s inst
@@ -108,9 +108,9 @@ inst_block
     |   OpenCurly CloseCurly { Console.WriteLine("Empty inst block"); }
     ;
 
-/*statement: if
+statement: if
          | inst
-         ;*/
+         ;
 
 /*open_statement: If OpenRound exp CloseRound inst
               | If OpenRound exp CloseRound inst Else inst
