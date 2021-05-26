@@ -23,10 +23,10 @@
 
 %type <type> block body
 %type <type> inst inst_s inst_block 
-%type <type> /*if*/ while read write return
+%type <type> /*if while*/ read write return
 %type <type> declar type names
 %type <type> exp logic relat addit multip bit unary factor
-%type <type> statement instaa
+%type <type> statement instaa open_statement closed_statement
 
 %%
 
@@ -82,25 +82,26 @@ names
 
 inst
     :   inst_block
-    |   while
+    /*|   while*/
     /*|   if*/
     |   return
     |   read
     |   write
-    |   exp SemiColon
+    |   exp SemiColon { Console.WriteLine("Empty shit"); }
     ;
 
 instaa
     :   statement
     ;
 
-/*statement
-    :   inst
+/*inst_s
+    : inst_s inst
+    | inst
     ;*/
 
 inst_s
-    : inst_s inst
-    | inst
+    : inst_s statement
+    | statement
     ;
 
 inst_block
@@ -108,22 +109,35 @@ inst_block
     |   OpenCurly CloseCurly { Console.WriteLine("Empty inst block"); }
     ;
 
-statement: if
-         | inst
-         ;
+statement
+    :   open_statement
+    |   closed_statement
+    ;
 
-/*open_statement: If OpenRound exp CloseRound inst
-              | If OpenRound exp CloseRound inst Else inst
-              ;*/
+open_statement
+    :   If OpenRound exp CloseRound statement
+    |   If OpenRound exp CloseRound closed_statement Else open_statement
+    |   While OpenRound exp CloseRound open_statement
+    ;
 
-if
+closed_statement
+    :   simple_statement
+    |   If OpenRound exp CloseRound closed_statement Else closed_statement
+    |   While OpenRound exp CloseRound closed_statement
+    ;
+
+simple_statement
+    :   inst
+    ;
+
+/*if
     :   If OpenRound exp CloseRound inst { Console.WriteLine("If is here"); }
     |   If OpenRound exp CloseRound inst Else inst { Console.WriteLine("if with else is here"); }
     ;
 
 while 
     :   While OpenRound exp CloseRound inst { Console.WriteLine("While is here"); }
-    ;
+    ;*/
 
 read    
     :   Read Ident SemiColon

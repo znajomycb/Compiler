@@ -24,3 +24,6 @@ Obj/
 *.conflicts
 *.exe
 *.bat
+
+**/Parser.cs
+**/Scanner.cs
