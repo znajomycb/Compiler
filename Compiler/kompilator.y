@@ -87,7 +87,7 @@ inst
     |   return
     |   read
     |   write
-    |   exp SemiColon { Console.WriteLine("Empty shit"); }
+    |   exp SemiColon
     ;
 
 instaa
@@ -110,20 +110,20 @@ inst_block
     ;
 
 statement
-    :   open_statement
-    |   closed_statement
+    :   open_statement { Console.WriteLine("Open statement"); }
+    |   closed_statement { Console.WriteLine("Closed statement"); }
     ;
 
-open_statement
-    :   If OpenRound exp CloseRound statement
-    |   If OpenRound exp CloseRound closed_statement Else open_statement
-    |   While OpenRound exp CloseRound open_statement
+open_statement 
+    :   If OpenRound exp CloseRound statement { Console.WriteLine("Just if"); }
+    |   If OpenRound exp CloseRound closed_statement Else open_statement { Console.WriteLine("Open if"); }
+    |   While OpenRound exp CloseRound open_statement  { Console.WriteLine("Open while"); }
     ;
 
 closed_statement
     :   simple_statement
-    |   If OpenRound exp CloseRound closed_statement Else closed_statement
-    |   While OpenRound exp CloseRound closed_statement
+    |   If OpenRound exp CloseRound closed_statement Else closed_statement { Console.WriteLine("Closed if"); }
+    |   While OpenRound exp CloseRound closed_statement { Console.WriteLine("Closed while"); }
     ;
 
 simple_statement
@@ -136,7 +136,7 @@ simple_statement
     ;
 
 while 
-    :   While OpenRound exp CloseRound inst { Console.WriteLine("While is here"); }
+    :   While OpenRound exp CloseRound statement { Console.WriteLine("While is here"); }
     ;*/
 
 read    
@@ -158,7 +158,7 @@ return
     ;
 
 exp 
-    :   logic Assign exp { Console.WriteLine("Here is assigment"); }
+    :   logic Assign exp { Console.WriteLine("Here is assignment"); }
     |   logic
     ;
 

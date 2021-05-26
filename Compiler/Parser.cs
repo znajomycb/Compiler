@@ -4,9 +4,9 @@
 
 // GPPG version 1.5.2
 // Machine:  DESKTOP-UBLKNJO
-// DateTime: 5/26/2021 14:40:49
+// DateTime: 5/26/2021 16:58:23
 // UserName: tourist
-// Input file <.\kompilator.y - 5/26/2021 14:40:40>
+// Input file <.\kompilator.y - 5/26/2021 16:58:20>
 
 // options: conflicts no-lines gplex conflicts
 
@@ -313,14 +313,34 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
       case 15: // names -> Ident
 { Console.WriteLine("Only one"); }
         break;
-      case 20: // inst -> exp, SemiColon
-{ Console.WriteLine("Empty shit"); }
-        break;
       case 24: // inst_block -> OpenCurly, inst_s, CloseCurly
 { Console.WriteLine("inst block"); }
         break;
       case 25: // inst_block -> OpenCurly, CloseCurly
 { Console.WriteLine("Empty inst block"); }
+        break;
+      case 26: // statement -> open_statement
+{ Console.WriteLine("Open statement"); }
+        break;
+      case 27: // statement -> closed_statement
+{ Console.WriteLine("Closed statement"); }
+        break;
+      case 28: // open_statement -> If, OpenRound, exp, CloseRound, statement
+{ Console.WriteLine("Just if"); }
+        break;
+      case 29: // open_statement -> If, OpenRound, exp, CloseRound, closed_statement, Else, 
+               //                   open_statement
+{ Console.WriteLine("Open if"); }
+        break;
+      case 30: // open_statement -> While, OpenRound, exp, CloseRound, open_statement
+{ Console.WriteLine("Open while"); }
+        break;
+      case 32: // closed_statement -> If, OpenRound, exp, CloseRound, closed_statement, Else, 
+               //                     closed_statement
+{ Console.WriteLine("Closed if"); }
+        break;
+      case 33: // closed_statement -> While, OpenRound, exp, CloseRound, closed_statement
+{ Console.WriteLine("Closed while"); }
         break;
       case 35: // read -> Read, Ident, SemiColon
 {
@@ -336,7 +356,7 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
 { Console.WriteLine("Return is here"); }
         break;
       case 38: // exp -> logic, Assign, exp
-{ Console.WriteLine("Here is assigment"); }
+{ Console.WriteLine("Here is assignment"); }
         break;
     }
 #pragma warning restore 162, 1522
