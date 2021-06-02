@@ -25,7 +25,7 @@
 %token Error
 
 %type <node_s> block body
-%type <node> inst inst_block
+%type <node> inst_block
 %type <node_s> inst_s
 %type <node> /*if while*/ read write return
 %type <node> declar type /*name_s*/
@@ -61,25 +61,21 @@ block
 body    
     :   body declar 
         { 
-            Console.WriteLine("1"); 
             $1.Add($2);
             $$ = $1;
         }
     |   body statement 
         {
-            Console.WriteLine("2");
             $1.Add($2);
             $$ = $1;
         }
     |   declar
         {
-            Console.WriteLine("3"); 
             $$ = new List<SyntaxTree>();
             $$.Add($1);
         }
     |   statement 
         {
-            Console.WriteLine("4"); 
             $$ = new List<SyntaxTree>();
             $$.Add($1);
         }
@@ -104,13 +100,11 @@ type
 name_s
     :   name_s Comma Ident 
         {
-            Console.WriteLine("More than one ident: ");
             $1.Add($3);
             $$ = $1;
         }
     |   Ident 
         {
-            Console.WriteLine("Only one ident: ");
             $$ = new List<string>();
             $$.Add($1);
         }
@@ -118,7 +112,7 @@ name_s
 
 /* Instruction */
 
-inst
+simple_statement
     :   inst_block
     /*|   while*/
     /*|   if*/
@@ -195,10 +189,6 @@ closed_statement
             var node = new While($3, $5, "While_cl");
             $$ = node;
         }
-    ;
-
-simple_statement
-    :   inst 
     ;
 
 /*if
@@ -353,7 +343,7 @@ unary
         }
     |   OpenRound DoubleKeyword CloseRound unary
         {
-
+            
         }
     |   factor
         {

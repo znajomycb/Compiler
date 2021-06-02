@@ -43,12 +43,13 @@ namespace Compiler
             Console.WriteLine();
             parser.Parse();
             fileStream.Close();
+            Console.WriteLine();
             if (errors == 0)
             {
-                
+                Console.Write("Compilation success!");
             }
             else
-                Console.WriteLine($"\n  {errors} errors detected\n");
+                Console.Write($"\n  {errors} errors detected\n");
             return errors == 0 ? 0 : 2;
         }
     }
@@ -83,8 +84,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -107,7 +108,7 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(exp.type);
+            Console.WriteLine("\t" + exp.type);
         }
     }
 
@@ -134,8 +135,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -161,8 +162,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -189,8 +190,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -215,8 +216,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -238,8 +239,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -269,7 +270,7 @@ namespace Compiler
             Console.WriteLine(type);
             for (int i = 0; i < name_s.Count; i++)
             {
-                Console.WriteLine("Var: " + name_s[i]);
+                Console.WriteLine("\t" + "var: " + name_s[i]);
             }
         }
     }
@@ -293,8 +294,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -309,6 +310,7 @@ namespace Compiler
             this.left = left;
             this.right = right;
             this.els = els;
+            type = "If_else";
         }
 
         public override int Count()
@@ -319,9 +321,9 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
-            Console.WriteLine(els.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
+            Console.WriteLine("\t" + els.type);
         }
     }
 
@@ -344,8 +346,8 @@ namespace Compiler
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(left.type);
-            Console.WriteLine(right.type);
+            Console.WriteLine("\t" + left.type);
+            Console.WriteLine("\t" + right.type);
         }
     }
 
@@ -387,7 +389,7 @@ namespace Compiler
             Console.WriteLine(type);
             for (int i = 0; i < children.Count; i++)
             {
-                Console.WriteLine("Chidlren: " + children[i].type);
+                Console.WriteLine("\t" + "children: " + children[i].type);
             }
         }
     }
