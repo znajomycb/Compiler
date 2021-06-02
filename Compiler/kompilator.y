@@ -1,9 +1,12 @@
 ﻿%namespace Compiler
+%using Compiler.IO
 
 %union
 {
     public string val;
-    public char type;
+    public SyntaxTree node;
+    public List<SyntaxTree> node_s;
+    public List<string> name_s;
 }
 
 %token Program Eof Return
@@ -21,19 +24,21 @@
 %token <val> Ident IntNumber DoubleNumber
 %token Error
 
-%type <type> block body
-%type <type> inst inst_s inst_block 
-%type <type> /*if while*/ read write return
-%type <type> declar type names
-%type <type> exp logic relat addit multip bit unary factor
-%type <type> statement instaa open_statement closed_statement
+%type <node_s> block body
+%type <node> inst inst_block
+%type <node_s> inst_s
+%type <node> /*if while*/ read write return
+%type <node> declar type /*name_s*/
+%type <node> exp logic relat addit multip bit unary factor
+%type <node> statement open_statement closed_statement simple_statement
+%type <name_s> name_s
 
 %%
 
 start   
     :   Program block Eof
         {
-            Console.WriteLine("Here is program!");
+            Console.WriteLine("Here is a program!");
             YYACCEPT;
         }
     ;
@@ -41,41 +46,74 @@ start
 block   
     :   OpenCurly body CloseCurly
         {
-            Console.WriteLine("Here is the main block!");
-            Console.WriteLine("Compilation successful\n");
+            $$ = $2;
+            foreach (var x in $$) {
+                Print(x, 1);
+            }
             YYACCEPT;
         }
     |   OpenCurly CloseCurly
         {
-            Console.WriteLine("Here is the empty main block");
-            Console.WriteLine("Compilation successful\n");
             YYACCEPT;
         }
     ;
 
 body    
-    :   body declar
-    |   body instaa
+    :   body declar 
+        { 
+            Console.WriteLine("1"); 
+            $1.Add($2);
+            $$ = $1;
+        }
+    |   body statement 
+        {
+            Console.WriteLine("2");
+            $1.Add($2);
+            $$ = $1;
+        }
     |   declar
-    |   instaa
+        {
+            Console.WriteLine("3"); 
+            $$ = new List<SyntaxTree>();
+            $$.Add($1);
+        }
+    |   statement 
+        {
+            Console.WriteLine("4"); 
+            $$ = new List<SyntaxTree>();
+            $$.Add($1);
+        }
     ;
 
 /* Declaration */
 
 declar
-    :   type names SemiColon
+    :   type name_s SemiColon
+        {
+            $$ = new Variable("Variable", $2);
+        }
     ;
 
 type
-    :   IntKeyword  { Console.WriteLine("Integer declar here"); }
-    |   DoubleKeyword { Console.WriteLine("Double declar here"); }
-    |   BoolKeyword { Console.WriteLine("Bool declar here"); }
+    :   IntKeyword  
+    |   DoubleKeyword 
+    |   BoolKeyword 
     |   IntHex
     ;
 
-names
-    :   names Comma Ident { Console.WriteLine("Many"); }
-    |   Ident { Console.WriteLine("Only one"); }
+name_s
+    :   name_s Comma Ident 
+        {
+            Console.WriteLine("More than one ident: ");
+            $1.Add($3);
+            $$ = $1;
+        }
+    |   Ident 
+        {
+            Console.WriteLine("Only one ident: ");
+            $$ = new List<string>();
+            $$.Add($1);
+        }
     ;
 
 /* Instruction */
@@ -85,136 +123,276 @@ inst
     /*|   while*/
     /*|   if*/
     |   return
-    |   read
+    |   read 
     |   write
     |   exp SemiColon
     ;
 
-instaa
-    :   statement
-    ;
-
 /*inst_s
-    : inst_s inst
-    | inst
+    :   inst_s inst 
+    |   inst
     ;*/
 
 inst_s
-    : inst_s statement
-    | statement
+    :   inst_s statement
+        {
+            $1.Add($2);
+            $$ = $1;
+        }
+    |   statement 
+        {
+            $$ = new List<SyntaxTree>();
+            $$.Add($1);
+        }
     ;
 
 inst_block
-    :   OpenCurly inst_s CloseCurly { Console.WriteLine("inst block"); }
-    |   OpenCurly CloseCurly { Console.WriteLine("Empty inst block"); }
+    :   OpenCurly inst_s CloseCurly 
+        {
+            $$ = new Statement("Inst_s: ", $2);
+        }
+    |   OpenCurly CloseCurly 
     ;
 
 statement
-    :   open_statement { Console.WriteLine("Open statement"); }
-    |   closed_statement { Console.WriteLine("Closed statement"); }
+    :   open_statement 
+        {  
+            $$ = $1;
+        }
+    |   closed_statement 
+        {
+            $$ = $1;
+        }
     ;
 
 open_statement 
-    :   If OpenRound exp CloseRound statement { Console.WriteLine("Just if"); }
-    |   If OpenRound exp CloseRound closed_statement Else open_statement { Console.WriteLine("Open if"); }
-    |   While OpenRound exp CloseRound open_statement  { Console.WriteLine("Open while"); }
+    :   If OpenRound exp CloseRound statement
+        {
+            $$ = new IfOnly($3, $5);
+        }
+    |   If OpenRound exp CloseRound closed_statement Else open_statement
+        {
+            $$ = new IfElse($3, $5, $7);
+        }
+    |   While OpenRound exp CloseRound open_statement 
+        {
+            var node = new While($3, $5, "While_op");
+            $$ = node;
+        }
     ;
 
 closed_statement
-    :   simple_statement
-    |   If OpenRound exp CloseRound closed_statement Else closed_statement { Console.WriteLine("Closed if"); }
-    |   While OpenRound exp CloseRound closed_statement { Console.WriteLine("Closed while"); }
+    :   simple_statement 
+        {
+            $$ = $1;
+        }
+    |   If OpenRound exp CloseRound closed_statement Else closed_statement 
+        {
+            $$ = new IfElse($3, $5, $7);
+        }
+    |   While OpenRound exp CloseRound closed_statement 
+        {
+            var node = new While($3, $5, "While_cl");
+            $$ = node;
+        }
     ;
 
 simple_statement
-    :   inst
+    :   inst 
     ;
 
 /*if
-    :   If OpenRound exp CloseRound inst { Console.WriteLine("If is here"); }
-    |   If OpenRound exp CloseRound inst Else inst { Console.WriteLine("if with else is here"); }
+    :   If OpenRound exp CloseRound inst 
+    |   If OpenRound exp CloseRound inst Else inst 
     ;
 
 while 
-    :   While OpenRound exp CloseRound statement { Console.WriteLine("While is here"); }
+    :   While OpenRound exp CloseRound statement 
     ;*/
 
 read    
     :   Read Ident SemiColon
         {
-            Console.WriteLine("Reading identifier!");
+            $$ = new Read($2, "Read");
         }
     ;
 
 write   
     :   Write exp SemiColon
         {
-            Console.WriteLine("Writing expression!");
+            $$ = new Write($2, "Write");
         }
     ;
 
 return
-    :   Return SemiColon { Console.WriteLine("Return is here"); }
+    :   Return SemiColon 
     ;
 
 exp 
-    :   logic Assign exp { Console.WriteLine("Here is assignment"); }
+    :   logic Assign exp 
+        {
+            $$ = new AssignOperator($1, $3);
+        }
     |   logic
+        {
+            $$ = $1;
+        }
     ;
 
 logic
     :   logic Or relat
+        {
+            $$ = new LogicalOperator($1, $3, 0);
+        }
     |   logic And relat
+        {
+            $$ = new LogicalOperator($1, $3, 1);
+        }
     |   relat
+        {
+            $$ = $1;
+        }
     ;
 
 relat
     :   relat Equal addit
+        {
+            $$ = new RelationalOperator($1, $3, 0);
+        }
     |   relat NotEqual addit
+        {
+            $$ = new RelationalOperator($1, $3, 1);
+        }
     |   relat Greater addit
+        {
+            $$ = new RelationalOperator($1, $3, 2);
+        }
     |   relat GreaterOrEqual addit
+        {
+            $$ = new RelationalOperator($1, $3, 3);
+        }
     |   relat Less addit
+        {
+            $$ = new RelationalOperator($1, $3, 4);
+        }
     |   relat LessOrEqual addit
+        {
+            $$ = new RelationalOperator($1, $3, 5);
+        }
     |   addit
+        {
+            $$ = $1;
+        }
     ;
 
 addit
     :   addit Plus multip
+        {
+            $$ = new ArithOperator($1, $3, 0);
+        }
     |   addit Minus multip
+        {
+            $$ = new ArithOperator($1, $3, 1);
+        }
     |   multip
+        {
+            $$ = $1;
+        }
     ;
 
 multip
     :   multip Multiplies bit
+        {
+            $$ = new ArithOperator($1, $3, 2);
+        }
     |   multip Divides bit
+        {
+            $$ = new ArithOperator($1, $3, 3);
+        }
     |   bit
+        {
+            $$ = $1;
+        }
     ;
 
 bit
     :   bit BitOr unary
+        {
+            $$ = new BitOperator($1, $3, 0);
+        }
     |   bit BitAnd unary
+        {
+            $$ = new BitOperator($1, $3, 1);
+        }
     |   unary
+        {
+            $$ = $1;
+        }
     ;
 
 unary   
     :   Minus unary
+        {
+            $$ = new UnaryOperator($2, 0);
+        }
     |   Plus unary
+        {
+            $$ = new UnaryOperator($2, 1);
+        }
     |   BitNot unary
+        {
+            $$ = new UnaryOperator($2, 2);
+        }
     |   Not unary
+        {
+            $$ = new UnaryOperator($2, 3);
+        }
     |   OpenRound IntKeyword CloseRound unary
+        {
+            
+        }
     |   OpenRound DoubleKeyword CloseRound unary
+        {
+
+        }
     |   factor
+        {
+            $$ = $1;
+        }
     ;
 
 factor
-    :   OpenRound exp CloseRound 
+    :   OpenRound exp CloseRound
+        {
+            $$ = $2;
+        }
     |   Ident
+        {
+            $$ = new Variable("Id", $1);
+        }
     |   IntNumber
+        {
+            $$ = new Variable("Int", $1);
+        }
     |   DoubleNumber
+        {
+            $$ = new Variable("Double", $1);
+        }
     |   True
+        {
+            $$ = new Variable("True", "1");
+        }
     |   False
+        {
+            $$ = new Variable("False", "0");
+        }
     ;
 
 %%
 
-public Parser(Scanner scanner) : base(scanner) { }
+    public Parser(Scanner scanner) : base(scanner) { }
+
+    public void Print(SyntaxTree node, int level)
+    {
+        node.Print();
+    }
