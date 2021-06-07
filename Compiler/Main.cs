@@ -11,6 +11,11 @@ namespace Compiler
         public static int errors = 0;
         public static List<string> source;
 
+        private static StreamWriter sw;
+        private static int nr;
+
+        public static List<SyntaxTree> code = new List<SyntaxTree>();
+
         // arg[0] określa plik źródłowy
         // pozostałe argumenty są ignorowane
         public static int Main(string[] args)
@@ -46,11 +51,45 @@ namespace Compiler
             Console.WriteLine();
             if (errors == 0)
             {
+                sw = new StreamWriter(file + ".ll");
+                GenCode();
+                sw.Close();
                 Console.Write("Compilation success!");
             }
             else
                 Console.Write($"\n  {errors} errors detected\n");
             return errors == 0 ? 0 : 2;
+        }
+        public static void EmitCode(string instr = null)
+        {
+            sw.WriteLine(instr);
+        }
+        public static void EmitCode(string instr, params object[] args)
+        {
+            sw.WriteLine(instr, args);
+        }
+        public static string NewTemp()
+        {
+            return string.Format($"%t{++nr}");
+        }
+
+        private static void GenCode()
+        {
+            EmitCode("; prolog");
+            EmitCode("@readInt = constant [3 x i8] c\"%d\\00\"");
+            EmitCode("@writeInt = constant [4 x i8] c\"%d\\0A\\00\"");
+            EmitCode("@readDouble = constant [4 x i8] c\"%lf\\00\"");
+            EmitCode("@writeDouble = constant [5 x i8] c\"%lf\\0A\\00\"");
+            EmitCode("declare i32 @printf(i8*, ...)");
+            EmitCode("declare i32 @scanf(i8*, ...)");
+            EmitCode("define i32 @main()");
+            EmitCode("{");
+            for (int i = 0; i < code.Count; ++i)
+            {
+                code[i].GenCode();
+            }
+            EmitCode("ret i32 0");
+            EmitCode("}");
         }
     }
 
@@ -59,338 +98,14 @@ namespace Compiler
         public string type;
         public abstract int Count();
         public abstract void Print();
+        public abstract string GenCode();
     }
 
-    public class BinaryOperator : SyntaxTree
+    class ErrorException : ApplicationException
     {
-        public SyntaxTree left;
-        public SyntaxTree right;
-
-        public int op;
-
-        public BinaryOperator(SyntaxTree left, SyntaxTree right, int op)
-        {
-            this.left = left;
-            this.right = right;
-            this.op = op;
-            type = "Binary_op";
-        }
-
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class UnaryOperator : SyntaxTree
-    {
-        public SyntaxTree exp;
-        public int op;
-        public UnaryOperator(SyntaxTree exp, int op)
-        {
-            this.exp = exp;
-            this.op = op;
-            type = "Unary_op";
-        }
-
-        public override int Count()
-        {
-            return 1;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + exp.type);
-        }
-    }
-
-    public class BitOperator : SyntaxTree
-    {
-        private SyntaxTree left;
-        private SyntaxTree right;
-
-        public int op;
-
-        public BitOperator(SyntaxTree left, SyntaxTree right, int op)
-        {
-            this.left = left;
-            this.right = right;
-            this.op = op;
-            type = "Bit_op";
-        }
-
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class ArithOperator : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-
-        public int op;
-
-        public ArithOperator(SyntaxTree left, SyntaxTree right, int op)
-        {
-            this.left = left;
-            this.right = right;
-            this.op = op;
-            type = "Arith_op";
-        }
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class RelationalOperator : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-
-        public int op;
-
-        public RelationalOperator(SyntaxTree left, SyntaxTree right, int op)
-        {
-            this.left = left;
-            this.right = right;
-            this.op = op;
-            type = "Rel_op";
-        }
-
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class LogicalOperator : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-
-        public int op;
-        public LogicalOperator(SyntaxTree left, SyntaxTree right, int op)
-        {
-            this.left = left;
-            this.right = right;
-            this.op = op;
-            type = "Logical_op";
-        }
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class AssignOperator : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-        public AssignOperator(SyntaxTree left, SyntaxTree right)
-        {
-            this.left = left;
-            this.right = right;
-            type = "Assign_op";
-        }
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class Variable : SyntaxTree
-    {
-        public List<string> name_s;
-        public string value;
-        public Variable(string t, List<string> name_s)
-        {
-            type = t;
-            this.name_s = name_s;
-        }
-
-        public Variable(string t, string val)
-        {
-            type = t;
-            this.value = val;
-        }
-
-        public override int Count()
-        {
-            return 0;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            for (int i = 0; i < name_s.Count; i++)
-            {
-                Console.WriteLine("\t" + "var: " + name_s[i]);
-            }
-        }
-    }
-
-    public class While : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-        public While(SyntaxTree left, SyntaxTree right, string t)
-        {
-            this.left = left;
-            this.right = right;
-            type = t;
-        }
-
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class IfElse : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-        public SyntaxTree els;
-
-        public IfElse(SyntaxTree left, SyntaxTree right, SyntaxTree els)
-        {
-            this.left = left;
-            this.right = right;
-            this.els = els;
-            type = "If_else";
-        }
-
-        public override int Count()
-        {
-            return 3;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-            Console.WriteLine("\t" + els.type);
-        }
-    }
-
-    public class IfOnly : SyntaxTree
-    {
-        public SyntaxTree left;
-        public SyntaxTree right;
-
-        public IfOnly(SyntaxTree left, SyntaxTree right)
-        {
-            this.left = left;
-            this.right = right;
-            type = "If_only";
-        }
-        public override int Count()
-        {
-            return 2;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-        }
-    }
-
-    public class Exp : SyntaxTree
-    {
-        public Exp(string t)
-        {
-            type = t;
-        }
-
-        public override int Count()
-        {
-            return 0;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-        }
-    }
-
-    public class Statement : SyntaxTree
-    {
-        public List<SyntaxTree> children;
-
-        public Statement(string t, List<SyntaxTree> sts)
-        {
-            type = t;
-            this.children = sts;
-        }
-
-        public override int Count()
-        {
-            return 3;
-        }
-
-        public override void Print()
-        {
-            Console.WriteLine(type);
-            for (int i = 0; i < children.Count; i++)
-            {
-                Console.WriteLine("\t" + "children: " + children[i].type);
-            }
-        }
+        public readonly bool Recovery;
+        public ErrorException(bool rec = true) { ++Compiler.errors; Recovery = rec; }
+        public ErrorException(string msg, bool rec = true) : base(msg) { ++Compiler.errors; Recovery = rec; }
+        public ErrorException(string msg, Exception ex, bool rec = true) : base(msg, ex) { ++Compiler.errors; Recovery = rec; }
     }
 }

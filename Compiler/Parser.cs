@@ -4,9 +4,9 @@
 
 // GPPG version 1.5.2
 // Machine:  DESKTOP-UBLKNJO
-// DateTime: 6/2/2021 19:24:39
+// DateTime: 6/6/2021 23:39:13
 // UserName: tourist
-// Input file <.\kompilator.y - 6/2/2021 19:19:09>
+// Input file <.\kompilator.y - 6/6/2021 23:39:08>
 
 // options: conflicts no-lines gplex conflicts
 
@@ -16,7 +16,7 @@ using System.CodeDom.Compiler;
 using System.Globalization;
 using System.Text;
 using QUT.Gppg;
-using Compiler.IO;
+using Compiler.AST;
 
 namespace Compiler
 {
@@ -286,6 +286,7 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
       case 3: // block -> OpenCurly, body, CloseCurly
 {
             CurrentSemanticValue.node_s = ValueStack[ValueStack.Depth-2].node_s;
+            Compiler.code = ValueStack[ValueStack.Depth-2].node_s;
             foreach (var x in CurrentSemanticValue.node_s) {
                 Print(x, 1);
             }
@@ -299,7 +300,9 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 5: // body -> body, declar
 { 
-            ValueStack[ValueStack.Depth-2].node_s.Add(ValueStack[ValueStack.Depth-1].node);
+            foreach (var x in ValueStack[ValueStack.Depth-1].node_s) {
+                ValueStack[ValueStack.Depth-2].node_s.Add(x);
+            }
             CurrentSemanticValue.node_s = ValueStack[ValueStack.Depth-2].node_s;
         }
         break;
@@ -311,8 +314,7 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 7: // body -> declar
 {
-            CurrentSemanticValue.node_s = new List<SyntaxTree>();
-            CurrentSemanticValue.node_s.Add(ValueStack[ValueStack.Depth-1].node);
+            CurrentSemanticValue.node_s = ValueStack[ValueStack.Depth-1].node_s;
         }
         break;
       case 8: // body -> statement
@@ -323,7 +325,11 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 9: // declar -> type, name_s, SemiColon
 {
-            CurrentSemanticValue.node = new Variable("Variable", ValueStack[ValueStack.Depth-2].name_s);
+            CurrentSemanticValue.node_s = new List<SyntaxTree>();
+            var node = ValueStack[ValueStack.Depth-2].name_s;
+            foreach (var x in node) {
+                CurrentSemanticValue.node_s.Add(new Declar(ValueStack[ValueStack.Depth-3].val, x));
+            }
         }
         break;
       case 14: // name_s -> name_s, Comma, Ident
@@ -436,32 +442,32 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 41: // relat -> relat, Equal, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 0);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.Equal);
         }
         break;
       case 42: // relat -> relat, NotEqual, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 1);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.NotEqual);
         }
         break;
       case 43: // relat -> relat, Greater, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 2);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.Greater);
         }
         break;
       case 44: // relat -> relat, GreaterOrEqual, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 3);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.GreaterOrEqual);
         }
         break;
       case 45: // relat -> relat, Less, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 4);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.Less);
         }
         break;
       case 46: // relat -> relat, LessOrEqual, addit
 {
-            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 5);
+            CurrentSemanticValue.node = new RelationalOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, RelationalType.LessOrEqual);
         }
         break;
       case 47: // relat -> addit
@@ -471,12 +477,12 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 48: // addit -> addit, Plus, multip
 {
-            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 0);
+            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, ArithType.Addition);
         }
         break;
       case 49: // addit -> addit, Minus, multip
 {
-            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 1);
+            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, ArithType.Substraction);
         }
         break;
       case 50: // addit -> multip
@@ -486,12 +492,12 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 51: // multip -> multip, Multiplies, bit
 {
-            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 2);
+            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, ArithType.Multiplication);
         }
         break;
       case 52: // multip -> multip, Divides, bit
 {
-            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, 3);
+            CurrentSemanticValue.node = new ArithOperator(ValueStack[ValueStack.Depth-3].node, ValueStack[ValueStack.Depth-1].node, ArithType.Division);
         }
         break;
       case 53: // multip -> bit
@@ -556,7 +562,7 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 65: // factor -> Ident
 {
-            CurrentSemanticValue.node = new Variable("Id", ValueStack[ValueStack.Depth-1].val);
+            CurrentSemanticValue.node = new Ident("Id", ValueStack[ValueStack.Depth-1].val);
         }
         break;
       case 66: // factor -> IntNumber
@@ -571,12 +577,12 @@ public class Parser: ShiftReduceParser<ValueType, LexLocation>
         break;
       case 68: // factor -> True
 {
-            CurrentSemanticValue.node = new Variable("True", "1");
+            CurrentSemanticValue.node = new Variable("Bool", "True");
         }
         break;
       case 69: // factor -> False
 {
-            CurrentSemanticValue.node = new Variable("False", "0");
+            CurrentSemanticValue.node = new Variable("Bool", "False");
         }
         break;
     }

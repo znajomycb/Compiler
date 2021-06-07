@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Compiler.IO
+namespace Compiler.AST
 {
-    public class Write : SyntaxTree
+    public class Variable : SyntaxTree
     {
-        public SyntaxTree exp;
-        public Write(SyntaxTree exp, string t)
+        public string value;
+ 
+        public Variable(string t, string value)
         {
-            this.exp = exp;
             type = t;
+            this.value = value;
         }
 
         public override int Count()
@@ -19,10 +20,15 @@ namespace Compiler.IO
             return 0;
         }
 
+        public override string GenCode()
+        {
+            return value;
+        }
+
         public override void Print()
         {
             Console.WriteLine(type);
-            Console.WriteLine(exp.type);
+            Console.WriteLine("\t" + "value: " + value);
         }
     }
 }

@@ -44,8 +44,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IO\Read.cs" />
-    <Compile Include="IO\Write.cs" />
+    <Compile Include="AST\ArithOperator.cs" />
+    <Compile Include="AST\AssignOperator.cs" />
+    <Compile Include="AST\BitOperator.cs" />
+    <Compile Include="AST\Declar.cs" />
+    <Compile Include="AST\Expression.cs" />
+    <Compile Include="AST\Ident.cs" />
+    <Compile Include="AST\IfElse.cs" />
+    <Compile Include="AST\IfOnly.cs" />
+    <Compile Include="AST\LogicalOperator.cs" />
+    <Compile Include="AST\Read.cs" />
+    <Compile Include="AST\RelationalOperator.cs" />
+    <Compile Include="AST\Statement.cs" />
+    <Compile Include="AST\UnaryOperator.cs" />
+    <Compile Include="AST\Variable.cs" />
+    <Compile Include="AST\While.cs" />
+    <Compile Include="AST\Write.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

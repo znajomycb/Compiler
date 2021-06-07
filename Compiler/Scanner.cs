@@ -6,9 +6,9 @@
 //
 //  GPLEX Version:  1.2.2
 //  Machine:  DESKTOP-UBLKNJO
-//  DateTime: 6/2/2021 14:36:26
+//  DateTime: 6/4/2021 21:37:14
 //  UserName: tourist
-//  GPLEX input file <.\kompilator.lex - 5/23/2021 17:19:49>
+//  GPLEX input file <.\kompilator.lex - 6/4/2021 21:36:53>
 //  GPLEX frame file <embedded resource>
 //
 //  Option settings: parser, minimize
@@ -1113,10 +1113,10 @@ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.P
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.If;
             break;
         case 63:
-yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.IntKeyword;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntKeyword;
             break;
         case 65:
-yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.IntHex;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntHex;
             break;
         case 69:
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.False;
@@ -1125,10 +1125,10 @@ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.F
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Else;
             break;
         case 77:
-yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.DoubleKeyword;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.DoubleKeyword;
             break;
         case 80:
-yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.BoolKeyword;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.BoolKeyword;
             break;
         case 81:
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.GreaterOrEqual;

@@ -1,5 +1,5 @@
 ﻿%namespace Compiler
-%using Compiler.IO
+%using Compiler.AST
 
 %union
 {
@@ -13,7 +13,7 @@
 %token If Else
 %token While
 %token Read Write
-%token IntKeyword DoubleKeyword BoolKeyword IntHex
+%token <val> IntKeyword DoubleKeyword BoolKeyword IntHex
 %token True False
 %token Assign
 %token Plus Minus Multiplies Divides
@@ -27,8 +27,9 @@
 %type <node_s> block body
 %type <node> inst_block
 %type <node_s> inst_s
-%type <node> /*if while*/ read write return
-%type <node> declar type /*name_s*/
+%type <node> read write return
+%type <node_s> declar
+%type <val> type
 %type <node> exp logic relat addit multip bit unary factor
 %type <node> statement open_statement closed_statement simple_statement
 %type <name_s> name_s
@@ -47,6 +48,7 @@ block
     :   OpenCurly body CloseCurly
         {
             $$ = $2;
+            Compiler.code = $2;
             foreach (var x in $$) {
                 Print(x, 1);
             }
@@ -61,7 +63,9 @@ block
 body    
     :   body declar 
         { 
-            $1.Add($2);
+            foreach (var x in $2) {
+                $1.Add(x);
+            }
             $$ = $1;
         }
     |   body statement 
@@ -71,8 +75,7 @@ body
         }
     |   declar
         {
-            $$ = new List<SyntaxTree>();
-            $$.Add($1);
+            $$ = $1;
         }
     |   statement 
         {
@@ -86,7 +89,11 @@ body
 declar
     :   type name_s SemiColon
         {
-            $$ = new Variable("Variable", $2);
+            $$ = new List<SyntaxTree>();
+            var node = $2;
+            foreach (var x in node) {
+                $$.Add(new Declar($1, x));
+            }
         }
     ;
 
@@ -247,27 +254,27 @@ logic
 relat
     :   relat Equal addit
         {
-            $$ = new RelationalOperator($1, $3, 0);
+            $$ = new RelationalOperator($1, $3, RelationalType.Equal);
         }
     |   relat NotEqual addit
         {
-            $$ = new RelationalOperator($1, $3, 1);
+            $$ = new RelationalOperator($1, $3, RelationalType.NotEqual);
         }
     |   relat Greater addit
         {
-            $$ = new RelationalOperator($1, $3, 2);
+            $$ = new RelationalOperator($1, $3, RelationalType.Greater);
         }
     |   relat GreaterOrEqual addit
         {
-            $$ = new RelationalOperator($1, $3, 3);
+            $$ = new RelationalOperator($1, $3, RelationalType.GreaterOrEqual);
         }
     |   relat Less addit
         {
-            $$ = new RelationalOperator($1, $3, 4);
+            $$ = new RelationalOperator($1, $3, RelationalType.Less);
         }
     |   relat LessOrEqual addit
         {
-            $$ = new RelationalOperator($1, $3, 5);
+            $$ = new RelationalOperator($1, $3, RelationalType.LessOrEqual);
         }
     |   addit
         {
@@ -278,11 +285,11 @@ relat
 addit
     :   addit Plus multip
         {
-            $$ = new ArithOperator($1, $3, 0);
+            $$ = new ArithOperator($1, $3, ArithType.Addition);
         }
     |   addit Minus multip
         {
-            $$ = new ArithOperator($1, $3, 1);
+            $$ = new ArithOperator($1, $3, ArithType.Substraction);
         }
     |   multip
         {
@@ -293,11 +300,11 @@ addit
 multip
     :   multip Multiplies bit
         {
-            $$ = new ArithOperator($1, $3, 2);
+            $$ = new ArithOperator($1, $3, ArithType.Multiplication);
         }
     |   multip Divides bit
         {
-            $$ = new ArithOperator($1, $3, 3);
+            $$ = new ArithOperator($1, $3, ArithType.Division);
         }
     |   bit
         {
@@ -358,7 +365,7 @@ factor
         }
     |   Ident
         {
-            $$ = new Variable("Id", $1);
+            $$ = new Ident("Id", $1);
         }
     |   IntNumber
         {
@@ -370,11 +377,11 @@ factor
         }
     |   True
         {
-            $$ = new Variable("True", "1");
+            $$ = new Variable("Bool", "True");
         }
     |   False
         {
-            $$ = new Variable("False", "0");
+            $$ = new Variable("Bool", "False");
         }
     ;
 
