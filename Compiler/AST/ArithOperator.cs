@@ -19,13 +19,32 @@ namespace Compiler.AST
 
         public ArithType op;
 
-        public ArithOperator(SyntaxTree left, SyntaxTree right, ArithType op)
+        public ArithOperator(SyntaxTree left, SyntaxTree right, ArithType op, int line)
         {
             this.left = left;
             this.right = right;
             this.op = op;
-            type = "int";
+            this.line = line;
+            elementType = ElementType.Arith_op;
         }
+
+        public override string CheckType()
+        {
+            string ll = left.CheckType();
+            string rr = right.CheckType();
+
+            if (ll == null || rr == null)
+                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
+
+            if (ll == "bool" || rr == "bool")
+                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
+
+            if (ll != rr)
+                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
+
+            return ll;
+        }
+
         public override int Count()
         {
             return 2;
@@ -36,42 +55,27 @@ namespace Compiler.AST
             string tw, t1, t2, t3, t4, tt;
 
             t1 = left.GenCode();
-            //if (left.type != type)
-            //{
-            //    t2 = Compiler.NewTemp();
-            //    Compiler.EmitCode($"{t2} = sitofp i32 {t1} to double");
-            //}
-            //else
-            //{
-                t2 = t1;
-            //}
-
+            t2 = t1;
+ 
             t3 = right.GenCode();
-            //if (right.type != type)
-            //{
-            //    t4 = Compiler.NewTemp();
-            //    Compiler.EmitCode($"{t4} = sitofp i32 {t3} to double");
-            //}
-            //else
-            //{
-                t4 = t3;
-            //}
-
+            t4 = t3;
+ 
             tw = Compiler.NewTemp();
-            tt = type == "int" ? "i32" : "double";
+            string ttype = CheckType();
+
             switch (op)
             {
                 case ArithType.Addition:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "add i32" : "fadd double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "add i32" : "fadd double", t2, t4);
                     break;
                 case ArithType.Substraction:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "sub i32" : "fsub double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "sub i32" : "fsub double", t2, t4);
                     break;
                 case ArithType.Multiplication:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "mul i32" : "fmul double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "mul i32" : "fmul double", t2, t4);
                     break;
                 case ArithType.Division:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "sdiv i32" : "fdiv double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "sdiv i32" : "fdiv double", t2, t4);
                     break;
                 default:
                     throw new ErrorException($"internal gencode error", false);
@@ -79,11 +83,12 @@ namespace Compiler.AST
             return tw;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            left.Print(delim);
+            right.Print(delim);
         }
     }
 }

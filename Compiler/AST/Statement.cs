@@ -9,10 +9,21 @@ namespace Compiler.AST
     {
         public List<SyntaxTree> children;
 
-        public Statement(string t, List<SyntaxTree> sts)
+        public Statement()
         {
-            type = t;
+            this.children = new List<SyntaxTree>();
+            elementType = ElementType.Statements;
+        }
+
+        public Statement(List<SyntaxTree> sts)
+        {
             this.children = sts;
+            elementType = ElementType.Statements;
+        }
+
+        public override string CheckType()
+        {
+            return type;
         }
 
         public override int Count()
@@ -29,12 +40,13 @@ namespace Compiler.AST
             return null;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
             for (int i = 0; i < children.Count; i++)
             {
-                Console.WriteLine("\t" + "children: " + children[i].type);
+                children[i].Print(delim);
             }
         }
     }

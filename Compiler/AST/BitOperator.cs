@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Compiler.AST
 {
-    public enum Bit
+    public enum BitType
     {
         Or,
         And
@@ -15,14 +15,29 @@ namespace Compiler.AST
         private SyntaxTree left;
         private SyntaxTree right;
 
-        public int op;
+        public BitType op;
 
-        public BitOperator(SyntaxTree left, SyntaxTree right, int op)
+        public BitOperator(SyntaxTree left, SyntaxTree right, BitType op, int line)
         {
             this.left = left;
             this.right = right;
             this.op = op;
-            type = "Bit_op";
+            this.line = line;
+            elementType = ElementType.Bit_op;
+        }
+
+        public override string CheckType()
+        {
+            string ll = left.CheckType();
+            string rr = right.CheckType();
+
+            if (ll == null || rr == null)
+                throw new ErrorException($"Inappropriate types for bit operator in line {line}", false);
+
+            if (ll != "int" || rr != "int")
+                throw new ErrorException($"Inappropriate types for bit operator in line {line}", false);
+
+            return ll;
         }
 
         public override int Count()
@@ -35,11 +50,12 @@ namespace Compiler.AST
             throw new NotImplementedException();
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            left.Print(delim);
+            right.Print(delim);
         }
     }
 }

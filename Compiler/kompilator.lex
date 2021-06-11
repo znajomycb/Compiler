@@ -2,10 +2,12 @@
 %namespace Compiler
 
 IntNumber		0|[1-9][0-9]*
+IntNumberHex	(0x|0X)[0-9a-fA-F]*
 DoubleNumber	0\.[0-9]+|[1-9][0-9]*\.[0-9]+
 Identifier		[a-zA-Z][a-zA-Z0-9]*
-Comment			\/\/".*"\n
+Comment			\/\/.*/\n
 Endl			\n|\r\n
+Literal			\"(\\.|[^\n\\"])*\"
 
 %%
 
@@ -47,10 +49,16 @@ Endl			\n|\r\n
 ";"				{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.SemiColon; }
 {Identifier}	{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.Ident; }
 {IntNumber}		{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntNumber; }
+{IntNumberHex}	{ Console.WriteLine("Inthex: " + yytext);
+	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntNumberHex; }
 {DoubleNumber}	{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.DoubleNumber; }
+{Literal}		{ Console.WriteLine("Literal string: " + yytext);
+	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.Literal; }
 <<EOF>>			{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Eof; }
 " "				{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
 "\t"			{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
-{Comment}		{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
+{Comment}		{ Console.WriteLine("Comment");
+	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
 {Endl}			{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
-.				{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Error; }
+.				{ Console.WriteLine("Error: " + yytext);
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Error; }

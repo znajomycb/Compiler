@@ -14,6 +14,7 @@ namespace Compiler.AST
         Less,
         LessOrEqual
     }
+
     public class RelationalOperator : SyntaxTree
     {
         public SyntaxTree left;
@@ -21,12 +22,40 @@ namespace Compiler.AST
 
         public RelationalType op;
 
-        public RelationalOperator(SyntaxTree left, SyntaxTree right, RelationalType op)
+        public RelationalOperator(SyntaxTree left, SyntaxTree right, RelationalType op, int line)
         {
             this.left = left;
             this.right = right;
             this.op = op;
-            type = "Rel_op";
+            this.line = line;
+            elementType = ElementType.Rel_op;
+        }
+
+        public override string CheckType()
+        {
+            string ll = left.CheckType();
+            string rr = right.CheckType();
+
+            if (ll == null || rr == null) throw new ErrorException($"Semantic error in line {line}", false);
+
+            switch (op)
+            {
+                case RelationalType.Equal:
+                case RelationalType.NotEqual:
+                    if (ll != rr) throw new ErrorException($"Semantic error in line {line}", false);
+                    break;
+                case RelationalType.Greater:
+                case RelationalType.GreaterOrEqual:
+                case RelationalType.Less:
+                case RelationalType.LessOrEqual:
+                    if (ll != rr) throw new ErrorException($"Semantic error in line {line}", false);
+                    if (ll == "bool") throw new ErrorException($"Semantic error in line {line}", false);
+                    break;
+                default:
+                    throw new ErrorException($"Semantic error in line {line}", false);
+            }
+
+            return ll;
         }
 
         public override int Count()
@@ -40,10 +69,10 @@ namespace Compiler.AST
 
             t1 = left.GenCode();
             t2 = t1;
- 
+
             t3 = right.GenCode();
             t4 = t3;
-   
+
             tw = Compiler.NewTemp();
             tt = "i32";
             switch (op)
@@ -72,11 +101,12 @@ namespace Compiler.AST
             return tw;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            left.Print(delim);
+            right.Print(delim);
         }
     }
 }

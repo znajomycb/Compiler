@@ -9,10 +9,20 @@ namespace Compiler.AST
     {
         public string name;
 
-        public Declar(string t, string name)
+        public Declar(string type, string name)
         {
-            type = t;
+            this.type = type;
             this.name = name;
+            elementType = ElementType.Declar;
+        }
+
+        public override string CheckType()
+        {
+            string tt = Compiler.GetIdentType(name);
+            if (tt != null)
+                throw new ErrorException($"Variable already declared", false);
+
+            return type;
         }
 
         public override int Count()
@@ -22,14 +32,17 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            Compiler.EmitCode("%{0}$ = alloca {1}", name, type == "int" ? "i32" : "double");
+            string tt = Compiler.ToLLVMType(type);
+            Compiler.EmitCode("%{0}$ = alloca {1}", name, tt);
             return null;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + "name: " + name);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            Console.WriteLine(delim + "type: " + type);
+            Console.WriteLine(delim + "name: " + name);
         }
     }
 }

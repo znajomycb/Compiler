@@ -13,7 +13,12 @@ namespace Compiler.AST
         {
             this.left = left;
             this.right = right;
-            type = t;
+            elementType = ElementType.While;
+        }
+
+        public override string CheckType()
+        {
+            return null;
         }
 
         public override int Count()
@@ -41,11 +46,12 @@ namespace Compiler.AST
             return null;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            left.Print(delim);
+            right.Print(delim);
         }
     }
 }

@@ -5,13 +5,11 @@ using System.Text;
 
 namespace Compiler.AST
 {
-    public class Expression : SyntaxTree
+    public class Return : SyntaxTree
     {
-        public string type;
-        public Expression(string t)
+        public Return(int line) 
         {
-            type = t;
-            elementType = ElementType.Expression;
+            this.line = line;
         }
 
         public override string CheckType()
@@ -26,14 +24,13 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
+            Compiler.EmitCode("ret i32 0");
             return null;
         }
 
         public override void Print(string delim)
         {
-            Console.WriteLine(delim + elementType);
-            delim += "\t";
-            Console.WriteLine(delim + type);
+            Console.WriteLine($"Return in line {line}");
         }
     }
 }

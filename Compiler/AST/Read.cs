@@ -5,14 +5,45 @@ using System.Text;
 
 namespace Compiler.AST
 {
+    public enum ReadType
+    {
+        Decimal,
+        Hexadecimal
+    }
     public class Read : SyntaxTree
     {
         public string ident;
+        public ReadType op;
 
-        public Read(string ident, string t)
+        public Read(string ident, ReadType op, int line)
         {
             this.ident = ident;
-            type = t;
+            this.op = op;
+            this.line = line;
+            elementType = ElementType.Read;
+        }
+
+        public override string CheckType()
+        {
+            string type = Compiler.GetIdentType(ident);
+            if (type == null)
+                throw new ErrorException($"Undeclared variable");
+            
+            switch (op)
+            {
+                case ReadType.Decimal:
+                    if (type == "bool")
+                        throw new ErrorException($"Inappropriate type for read instruction in line {line}", false);
+                    break;
+                case ReadType.Hexadecimal:
+                    if (type != "int")
+                        throw new ErrorException($"Inappropriate type for read (hex) instruction in line {line}", false);
+                    break;
+                default:
+                    break;
+            }
+
+            return type;
         }
 
         public override int Count()
@@ -25,7 +56,19 @@ namespace Compiler.AST
             //if (type == "int")
             //{
                 //Compiler.EmitCode($"%{ident}$ = alloca i32");
-                Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readInt to i8*), i32* %{0}$)", ident);
+            switch (op)
+            {
+                case ReadType.Decimal:
+                    Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readInt to i8*), i32* %{0}$)", ident);
+                    break;
+                case ReadType.Hexadecimal:
+                    Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readIntHex to i8*), i32* %{0}$)", ident);
+                    break;
+                default:
+                    break;
+            }
+            
+            //Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readIntHex to i8*), i32* %{0}$)", ident);
             //} 
             //else
             //{
@@ -36,10 +79,11 @@ namespace Compiler.AST
             return null;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t Ident: " + ident);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            Console.WriteLine(delim + "Ident: " + ident);
         }
     }
 }

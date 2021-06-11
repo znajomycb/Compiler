@@ -55,6 +55,7 @@
     <Compile Include="AST\LogicalOperator.cs" />
     <Compile Include="AST\Read.cs" />
     <Compile Include="AST\RelationalOperator.cs" />
+    <Compile Include="AST\Return.cs" />
     <Compile Include="AST\Statement.cs" />
     <Compile Include="AST\UnaryOperator.cs" />
     <Compile Include="AST\Variable.cs" />

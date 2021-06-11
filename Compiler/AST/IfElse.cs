@@ -16,7 +16,12 @@ namespace Compiler.AST
             this.left = left;
             this.right = right;
             this.els = els;
-            type = "If_else";
+            elementType = ElementType.If_else;
+        }
+
+        public override string CheckType()
+        {
+            return null;
         }
 
         public override int Count()
@@ -45,12 +50,13 @@ namespace Compiler.AST
             return null;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + left.type);
-            Console.WriteLine("\t" + right.type);
-            Console.WriteLine("\t" + els.type);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            left.Print(delim);
+            right.Print(delim);
+            els.Print(delim);
         }
     }
 }

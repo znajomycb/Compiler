@@ -10,18 +10,41 @@ namespace Compiler.AST
         public string name;
         public string value;
 
-        public Ident(string t, string name)
+        public Ident(string name)
         {
-            type = t;
+            string type = Compiler.GetIdentType(name);
+            if (type == null)
+            {
+                throw new ErrorException($"Variable {name} is not declared!");
+            } 
+            else
+            {
+                this.type = type;
+            }
+            elementType = ElementType.Ident;
             this.name = name;
             this.value = null;
         }
 
-        public Ident(string t, string name, string value)
+        public Ident(string name, string value)
         {
-            type = t;
+            string type = Compiler.GetIdentType(name);
+            if (type == null)
+            {
+                throw new ErrorException($"Variable {name} is not declared!");
+            }
+            else
+            {
+                this.type = type;
+            }
+            elementType = ElementType.Ident;
             this.name = name;
             this.value = value;
+        }
+
+        public override string CheckType()
+        {
+            return type;
         }
 
         public override int Count()
@@ -32,15 +55,18 @@ namespace Compiler.AST
         public override string GenCode()
         {
             string tw = Compiler.NewTemp();
-            Compiler.EmitCode("{0} = load i32, i32* %{1}$", tw, name);
+            string tt = Compiler.ToLLVMType(type);
+            Compiler.EmitCode("{0} = load {1}, {1}* %{2}$", tw, tt, name);
             return tw;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + "name: " + name);
-            Console.WriteLine("\t" + "value: " + value);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            Console.WriteLine(delim + "name: " + name);
+            Console.WriteLine(delim + "type: " + type);
+            Console.WriteLine(delim + "value: " + value);
         }
     }
 }

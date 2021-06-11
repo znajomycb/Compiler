@@ -21,7 +21,7 @@
 %token Equal NotEqual Greater GreaterOrEqual Less LessOrEqual
 %token OpenRound CloseRound OpenCurly CloseCurly
 %token Comma SemiColon
-%token <val> Ident IntNumber DoubleNumber
+%token <val> Ident IntNumber IntNumberHex DoubleNumber Literal
 %token Error
 
 %type <node_s> block body
@@ -42,6 +42,18 @@ start
             Console.WriteLine("Here is a program!");
             YYACCEPT;
         }
+    |   Program error_eof
+        {   
+            PrintSyntaxError("Syntax error in line", @2.StartLine);
+            Console.WriteLine("AAAAA");
+            YYABORT;
+        }
+    |   error_eof
+        {
+            PrintSyntaxError("The starting word is missing");
+            Console.WriteLine("BBBBBB");
+            YYABORT;
+        }
     ;
 
 block   
@@ -50,14 +62,11 @@ block
             $$ = $2;
             Compiler.code = $2;
             foreach (var x in $$) {
-                Print(x, 1);
+                Print(x);
             }
-            YYACCEPT;
         }
     |   OpenCurly CloseCurly
-        {
-            YYACCEPT;
-        }
+        {}
     ;
 
 body    
@@ -84,8 +93,6 @@ body
         }
     ;
 
-/* Declaration */
-
 declar
     :   type name_s SemiColon
         {
@@ -93,6 +100,7 @@ declar
             var node = $2;
             foreach (var x in node) {
                 $$.Add(new Declar($1, x));
+                Compiler.table.Add(x, $1);
             }
         }
     ;
@@ -117,22 +125,13 @@ name_s
         }
     ;
 
-/* Instruction */
-
 simple_statement
     :   inst_block
-    /*|   while*/
-    /*|   if*/
     |   return
     |   read 
     |   write
     |   exp SemiColon
     ;
-
-/*inst_s
-    :   inst_s inst 
-    |   inst
-    ;*/
 
 inst_s
     :   inst_s statement
@@ -150,9 +149,12 @@ inst_s
 inst_block
     :   OpenCurly inst_s CloseCurly 
         {
-            $$ = new Statement("Inst_s: ", $2);
+            $$ = new Statement($2);
         }
     |   OpenCurly CloseCurly 
+        {
+            $$ = new Statement();
+        }
     ;
 
 statement
@@ -198,37 +200,46 @@ closed_statement
         }
     ;
 
-/*if
-    :   If OpenRound exp CloseRound inst 
-    |   If OpenRound exp CloseRound inst Else inst 
-    ;
-
-while 
-    :   While OpenRound exp CloseRound statement 
-    ;*/
-
 read    
     :   Read Ident SemiColon
         {
-            $$ = new Read($2, "Read");
+            $$ = new Read($2, ReadType.Decimal, @1.StartLine);
+            $$.CheckType();
+        }
+    |   Read Ident Comma IntHex SemiColon
+        {
+            $$ = new Read($2, ReadType.Hexadecimal, @1.StartLine);
+            $$.CheckType();
         }
     ;
 
 write   
     :   Write exp SemiColon
         {
-            $$ = new Write($2, "Write");
+            $$ = new Write($2, WriteType.Decimal, @1.StartLine);
+        }
+    |   Write exp Comma IntHex SemiColon
+        {
+            $$ = new Write($2, WriteType.Hexadecimal, @1.StartLine);
+        }
+    |   Write Literal
+        {
+            $$ = new Write($2, @1.StartLine);
         }
     ;
 
 return
     :   Return SemiColon 
+        {
+            $$ = new Return(@1.StartLine);
+        }
     ;
 
 exp 
     :   logic Assign exp 
         {
-            $$ = new AssignOperator($1, $3);
+            $$ = new AssignOperator($1, $3, @2.StartLine);
+            $$.CheckType();
         }
     |   logic
         {
@@ -239,11 +250,11 @@ exp
 logic
     :   logic Or relat
         {
-            $$ = new LogicalOperator($1, $3, 0);
+            $$ = new LogicalOperator($1, $3, LogicalType.Or);
         }
     |   logic And relat
         {
-            $$ = new LogicalOperator($1, $3, 1);
+            $$ = new LogicalOperator($1, $3, LogicalType.And);
         }
     |   relat
         {
@@ -254,27 +265,33 @@ logic
 relat
     :   relat Equal addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.Equal);
+            $$ = new RelationalOperator($1, $3, RelationalType.Equal, @2.StartLine);
+            $$.CheckType();
         }
     |   relat NotEqual addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.NotEqual);
+            $$ = new RelationalOperator($1, $3, RelationalType.NotEqual, @2.StartLine);
+            $$.CheckType();
         }
     |   relat Greater addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.Greater);
+            $$ = new RelationalOperator($1, $3, RelationalType.Greater, @2.StartLine);
+            $$.CheckType();
         }
     |   relat GreaterOrEqual addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.GreaterOrEqual);
+            $$ = new RelationalOperator($1, $3, RelationalType.GreaterOrEqual, @2.StartLine);
+            $$.CheckType();
         }
     |   relat Less addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.Less);
+            $$ = new RelationalOperator($1, $3, RelationalType.Less, @2.StartLine);
+            $$.CheckType();
         }
     |   relat LessOrEqual addit
         {
-            $$ = new RelationalOperator($1, $3, RelationalType.LessOrEqual);
+            $$ = new RelationalOperator($1, $3, RelationalType.LessOrEqual, @2.StartLine);
+            $$.CheckType();
         }
     |   addit
         {
@@ -285,11 +302,13 @@ relat
 addit
     :   addit Plus multip
         {
-            $$ = new ArithOperator($1, $3, ArithType.Addition);
+            $$ = new ArithOperator($1, $3, ArithType.Addition, @2.StartLine);
+            $$.CheckType();
         }
     |   addit Minus multip
         {
-            $$ = new ArithOperator($1, $3, ArithType.Substraction);
+            $$ = new ArithOperator($1, $3, ArithType.Substraction, @2.StartLine);
+            $$.CheckType();
         }
     |   multip
         {
@@ -300,11 +319,13 @@ addit
 multip
     :   multip Multiplies bit
         {
-            $$ = new ArithOperator($1, $3, ArithType.Multiplication);
+            $$ = new ArithOperator($1, $3, ArithType.Multiplication, @2.StartLine);
+            $$.CheckType();
         }
     |   multip Divides bit
         {
-            $$ = new ArithOperator($1, $3, ArithType.Division);
+            $$ = new ArithOperator($1, $3, ArithType.Division, @2.StartLine);
+            $$.CheckType();
         }
     |   bit
         {
@@ -315,11 +336,13 @@ multip
 bit
     :   bit BitOr unary
         {
-            $$ = new BitOperator($1, $3, 0);
+            $$ = new BitOperator($1, $3, BitType.Or, @2.StartLine);
+            $$.CheckType();
         }
     |   bit BitAnd unary
         {
-            $$ = new BitOperator($1, $3, 1);
+            $$ = new BitOperator($1, $3, BitType.And, @2.StartLine);
+            $$.CheckType();
         }
     |   unary
         {
@@ -330,27 +353,33 @@ bit
 unary   
     :   Minus unary
         {
-            $$ = new UnaryOperator($2, 0);
+            $$ = new UnaryOperator($2, UnaryType.Minus, @1.StartLine);
+            $$.CheckType();
         }
     |   Plus unary
         {
-            $$ = new UnaryOperator($2, 1);
+            $$ = new UnaryOperator($2, UnaryType.Plus, @1.StartLine);
+            $$.CheckType();
         }
     |   BitNot unary
         {
-            $$ = new UnaryOperator($2, 2);
+            $$ = new UnaryOperator($2, UnaryType.BitNot, @1.StartLine);
+            $$.CheckType();
         }
     |   Not unary
         {
-            $$ = new UnaryOperator($2, 3);
+            $$ = new UnaryOperator($2, UnaryType.Not, @1.StartLine);
+            $$.CheckType();
         }
     |   OpenRound IntKeyword CloseRound unary
         {
-            
+            $$ = new UnaryOperator($4, UnaryType.ToInt, @2.StartLine);
+            $$.CheckType();
         }
     |   OpenRound DoubleKeyword CloseRound unary
         {
-            
+            $$ = new UnaryOperator($4, UnaryType.ToDouble, @2.StartLine);
+            $$.CheckType();
         }
     |   factor
         {
@@ -365,23 +394,30 @@ factor
         }
     |   Ident
         {
-            $$ = new Ident("Id", $1);
+            $$ = new Ident($1);
         }
     |   IntNumber
         {
-            $$ = new Variable("Int", $1);
+            $$ = new Variable("int", $1);
         }
     |   DoubleNumber
         {
-            $$ = new Variable("Double", $1);
+            $$ = new Variable("double", $1);
         }
     |   True
         {
-            $$ = new Variable("Bool", "True");
+            $$ = new Variable("bool", "True");
         }
     |   False
         {
-            $$ = new Variable("Bool", "False");
+            $$ = new Variable("bool", "False");
+        }
+    ;
+
+error_eof
+    :   error Eof
+        {
+            Console.WriteLine(@1.StartLine + " " + @1.EndLine + " " + @1.StartColumn + " " + @1.EndColumn);
         }
     ;
 
@@ -389,7 +425,13 @@ factor
 
     public Parser(Scanner scanner) : base(scanner) { }
 
-    public void Print(SyntaxTree node, int level)
+    public void Print(SyntaxTree node)
     {
-        node.Print();
+        string delim = "";
+        node.Print(delim);
+    }
+
+    public void PrintSyntaxError(string message, int line = -1) {
+        ++Compiler.errors;
+        Console.WriteLine(message + " " + line);
     }

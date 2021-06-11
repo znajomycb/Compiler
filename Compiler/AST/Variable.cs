@@ -9,10 +9,16 @@ namespace Compiler.AST
     {
         public string value;
  
-        public Variable(string t, string value)
+        public Variable(string type, string value)
         {
-            type = t;
+            this.type = type;
             this.value = value;
+            elementType = ElementType.Variable;
+        }
+
+        public override string CheckType()
+        {
+            return type;
         }
 
         public override int Count()
@@ -25,10 +31,12 @@ namespace Compiler.AST
             return value;
         }
 
-        public override void Print()
+        public override void Print(string delim)
         {
-            Console.WriteLine(type);
-            Console.WriteLine("\t" + "value: " + value);
+            Console.WriteLine(delim + elementType);
+            delim += "\t";
+            Console.WriteLine(delim + "type: " + type);
+            Console.WriteLine(delim + "value: " + value);
         }
     }
 }
