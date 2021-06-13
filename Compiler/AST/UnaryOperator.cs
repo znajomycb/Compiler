@@ -8,7 +8,6 @@ namespace Compiler.AST
     public enum UnaryType
     {
         Minus,
-        Plus,
         BitNot,
         Not,
         ToInt,
@@ -36,7 +35,6 @@ namespace Compiler.AST
 
             switch (op)
             {
-                case UnaryType.Plus:
                 case UnaryType.Minus:
                     if (ll == "bool")
                         throw new ErrorException($"Inappropriate type for unary minus operator in line {line}", false);
@@ -79,8 +77,6 @@ namespace Compiler.AST
             //invalid operand type for instrcution
             switch (op)
             {
-                case UnaryType.Plus:
-                    break;
                 case UnaryType.Minus:
                     Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "mul i32" : "fmul double", t2, type == "int" ? "-1" : "-1.0");
                     break;

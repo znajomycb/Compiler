@@ -83,10 +83,12 @@ namespace Compiler.AST
                             truelab = truelab.Remove(0, 1);
                             falselab = Compiler.NewTemp();
                             falselab = falselab.Remove(0, 1);
+
+                            string tw;
                             Compiler.EmitCode($"br i1 {t}, label %{truelab}, label %{falselab}");
 
                             Compiler.EmitCode($"{truelab}:");
-                            string tw = Compiler.NewTemp();
+                            tw = Compiler.NewTemp();
                             Compiler.EmitCode("{0} = getelementptr [5 x i8], [5 x i8]* @strTrue, i32 0, i32 0", tw);
                             Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
 
@@ -98,7 +100,6 @@ namespace Compiler.AST
                             tw = Compiler.NewTemp();
                             Compiler.EmitCode("{0} = getelementptr [6 x i8], [6 x i8]* @strFalse, i32 0, i32 0", tw);
                             Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
-
                             Compiler.EmitCode($"br label %{endlab}");
                             Compiler.EmitCode($"{endlab}:");
                             break;

@@ -109,7 +109,6 @@ type
     :   IntKeyword  
     |   DoubleKeyword 
     |   BoolKeyword 
-    |   IntHex
     ;
 
 name_s
@@ -172,15 +171,17 @@ open_statement
     :   If OpenRound exp CloseRound statement
         {
             $$ = new IfOnly($3, $5);
+            $$.CheckType();
         }
     |   If OpenRound exp CloseRound closed_statement Else open_statement
         {
             $$ = new IfElse($3, $5, $7);
+            $$.CheckType();
         }
     |   While OpenRound exp CloseRound open_statement 
         {
-            var node = new While($3, $5, "While_op");
-            $$ = node;
+            $$ = new While($3, $5, "While_op");
+            $$.CheckType();
         }
     ;
 
@@ -192,11 +193,12 @@ closed_statement
     |   If OpenRound exp CloseRound closed_statement Else closed_statement 
         {
             $$ = new IfElse($3, $5, $7);
+            $$.CheckType();
         }
     |   While OpenRound exp CloseRound closed_statement 
         {
-            var node = new While($3, $5, "While_cl");
-            $$ = node;
+            $$ = new While($3, $5, "While_cl");
+            $$.CheckType();
         }
     ;
 
@@ -257,10 +259,12 @@ logic
     :   logic Or relat
         {
             $$ = new LogicalOperator($1, $3, LogicalType.Or, @2.StartLine);
+            $$.CheckType();
         }
     |   logic And relat
         {
             $$ = new LogicalOperator($1, $3, LogicalType.And, @2.StartLine);
+            $$.CheckType();
         }
     |   relat
         {
@@ -360,11 +364,6 @@ unary
     :   Minus unary
         {
             $$ = new UnaryOperator($2, UnaryType.Minus, @1.StartLine);
-            $$.CheckType();
-        }
-    |   Plus unary
-        {
-            $$ = new UnaryOperator($2, UnaryType.Plus, @1.StartLine);
             $$.CheckType();
         }
     |   BitNot unary

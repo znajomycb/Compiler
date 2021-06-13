@@ -9,16 +9,24 @@ namespace Compiler.AST
     {
         public SyntaxTree left;
         public SyntaxTree right;
-        public While(SyntaxTree left, SyntaxTree right, string t)
+
+        public string which;
+        public While(SyntaxTree left, SyntaxTree right, string which)
         {
             this.left = left;
             this.right = right;
+            this.which = which;
             elementType = ElementType.While;
         }
 
         public override string CheckType()
         {
-            return null;
+            string ll = left.CheckType();
+            if (ll != "bool")
+                throw new ErrorException($"Expression type in 'while' must be a boolean!", false);
+
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -28,17 +36,21 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string t, startlab, innerlab, endlab;
+            string startlab, innerlab, endlab;
             startlab = Compiler.NewTemp();
             startlab = startlab.Remove(0, 1);
+
             innerlab = Compiler.NewTemp();
             innerlab = innerlab.Remove(0, 1);
+
             endlab = Compiler.NewTemp();
             endlab = endlab.Remove(0, 1);
+
             Compiler.EmitCode($"br label %{startlab}");
             Compiler.EmitCode($"{startlab}:");
-            t = left.GenCode();
+            string t = left.GenCode();
             Compiler.EmitCode($"br i1 {t}, label %{innerlab}, label %{endlab}");
+
             Compiler.EmitCode($"{innerlab}:");
             right.GenCode();
             Compiler.EmitCode($"br label %{startlab}");
@@ -48,7 +60,7 @@ namespace Compiler.AST
 
         public override void Print(string delim)
         {
-            Console.WriteLine(delim + elementType);
+            Console.WriteLine(delim + elementType + " " + (which));
             delim += "\t";
             left.Print(delim);
             right.Print(delim);

@@ -21,7 +21,12 @@ namespace Compiler.AST
 
         public override string CheckType()
         {
-            return null;
+            string ll = left.CheckType();
+            if (ll != "bool")
+                throw new ErrorException($"Expression type in 'if' must be a boolean!", false);
+
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -31,18 +36,23 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string t, truelab, falselab, endlab;
-            t = left.GenCode();
+            string truelab, falselab, endlab;
             truelab = Compiler.NewTemp();
             truelab = truelab.Remove(0, 1);
+
             falselab = Compiler.NewTemp();
             falselab = falselab.Remove(0, 1);
-            Compiler.EmitCode($"br i1 {t}, label %{truelab}, label %{falselab}");
-            Compiler.EmitCode($"{truelab}:");
-            right.GenCode();
+
             endlab = Compiler.NewTemp();
             endlab = endlab.Remove(0, 1);
+
+            string t = left.GenCode();
+            Compiler.EmitCode($"br i1 {t}, label %{truelab}, label %{falselab}");
+
+            Compiler.EmitCode($"{truelab}:");
+            right.GenCode();
             Compiler.EmitCode($"br label %{endlab}");
+
             Compiler.EmitCode($"{falselab}:");
             els.GenCode();
             Compiler.EmitCode($"br label %{endlab}");
