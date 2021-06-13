@@ -10,6 +10,7 @@ namespace Compiler.AST
         Decimal,
         Hexadecimal
     }
+
     public class Read : SyntaxTree
     {
         public string ident;
@@ -25,24 +26,25 @@ namespace Compiler.AST
 
         public override string CheckType()
         {
-            string type = Compiler.GetIdentType(ident);
-            if (type == null)
+            string tt = Compiler.GetIdentType(ident);
+            if (tt == null)
                 throw new ErrorException($"Undeclared variable");
             
             switch (op)
             {
                 case ReadType.Decimal:
-                    if (type == "bool")
+                    if (tt == "bool")
                         throw new ErrorException($"Inappropriate type for read instruction in line {line}", false);
                     break;
                 case ReadType.Hexadecimal:
-                    if (type != "int")
+                    if (tt != "int")
                         throw new ErrorException($"Inappropriate type for read (hex) instruction in line {line}", false);
                     break;
                 default:
                     break;
             }
 
+            type = tt;
             return type;
         }
 
@@ -53,13 +55,13 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            //if (type == "int")
-            //{
-                //Compiler.EmitCode($"%{ident}$ = alloca i32");
             switch (op)
             {
                 case ReadType.Decimal:
-                    Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readInt to i8*), i32* %{0}$)", ident);
+                    if (type == "int")
+                        Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readInt to i8*), i32* %{0}$)", ident);
+                    else
+                        Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([4 x i8]* @readDouble to i8*), double* %{0}$)", ident);
                     break;
                 case ReadType.Hexadecimal:
                     Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readIntHex to i8*), i32* %{0}$)", ident);
@@ -67,15 +69,7 @@ namespace Compiler.AST
                 default:
                     break;
             }
-            
-            //Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readIntHex to i8*), i32* %{0}$)", ident);
-            //} 
-            //else
-            //{
-            //    Compiler.EmitCode($"%{ident}$ = alloca double");
-            //    Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([4 x i8]* @readDouble to i8*), double* %{0}$)", ident);
-            //    Compiler.EmitCode("%{0} = load double, double* %{0}$", ident);
-            //}
+
             return null;
         }
 

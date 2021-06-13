@@ -7,7 +7,6 @@ namespace Compiler.AST
 {
     public class Expression : SyntaxTree
     {
-        public string type;
         public Expression(string t)
         {
             type = t;
@@ -16,7 +15,7 @@ namespace Compiler.AST
 
         public override string CheckType()
         {
-            return null;
+            return type;
         }
 
         public override int Count()

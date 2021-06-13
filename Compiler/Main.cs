@@ -10,6 +10,7 @@ namespace Compiler
     public class Compiler
     {
         public static Hashtable table = new Hashtable();
+        public static Hashtable literal = new Hashtable();
 
         public static int errors = 0;
         public static List<string> source;
@@ -75,7 +76,6 @@ namespace Compiler
             return errors == 0 ? 0 : 2;
         }
        
-
         public static void EmitCode(string instr = null)
         {
             sw.WriteLine(instr);
@@ -94,15 +94,30 @@ namespace Compiler
         private static void GenCode()
         {
             EmitCode("; prolog");
+
             EmitCode("@readInt = constant [3 x i8] c\"%d\\00\"");
             EmitCode("@readIntHex = constant [3 x i8] c\"%x\\00\"");
             EmitCode("@readDouble = constant [4 x i8] c\"%lf\\00\"");
+
             EmitCode("@writeInt = constant [4 x i8] c\"%d\\0A\\00\"");
             EmitCode("@writeIntHex = constant [6 x i8] c\"0X%X\\0A\\00\"");
             EmitCode("@writeDouble = constant [5 x i8] c\"%lf\\0A\\00\"");
-            //EmitCode("@writeBool = constant [5 x i8] c\"%lf\\0A\\00\"");
+ 
             EmitCode("declare i32 @printf(i8*, ...)");
             EmitCode("declare i32 @scanf(i8*, ...)");
+
+            EmitCode("@strTrue = private constant [5 x i8] c\"True\\00\"");
+            EmitCode("@strFalse = private constant [6 x i8] c\"False\\00\"");
+
+            foreach (DictionaryEntry x in literal)
+            {
+                string str = x.Key.ToString();
+                int len = str.Length - 1;
+                str = str.Substring(0, len) + "\\00\"";
+                string tt = x.Value.ToString();
+                EmitCode("{0} = private constant [{1} x i8] c{2}", tt, len, str);
+            }
+
             EmitCode("define i32 @main()");
             EmitCode("{");
             for (int i = 0; i < code.Count; ++i)
@@ -117,7 +132,16 @@ namespace Compiler
         {
             if (table.ContainsKey(name))
             {
-                return (string)table[name];
+                return table[name].ToString();
+            }
+            return null;
+        }
+
+        public static string GetLiteralId(string name)
+        {
+            if (literal.ContainsKey(name))
+            {
+                return literal[name].ToString();
             }
             return null;
         }
@@ -175,9 +199,7 @@ namespace Compiler
     public abstract class SyntaxTree
     {
         public string type = null;
-
         public int line = -1;
-
         public ElementType elementType;
         public abstract int Count();
         public abstract void Print(string delim);

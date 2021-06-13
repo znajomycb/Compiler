@@ -53,32 +53,72 @@ namespace Compiler.AST
                     break;
             }
 
-            return tt;
+            type = tt;
+            return type;
         }
 
         public override int Count()
         {
-            return 0;
+            return 1;
         }
 
         public override string GenCode()
         {
             string t;
-            t = exp.GenCode();
-            string tt = CheckType();
-            tt = Compiler.ToLLVMType(tt);
-            switch (tt)
+            switch (op)
             {
-                case "i32":
-                    if (op == WriteType.Decimal)
-                        Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([4 x i8] * @writeInt to i8 *), i32 {0})", t);
-                    else
-                        Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([6 x i8] * @writeIntHex to i8 *), i32 {0})", t);
+                case WriteType.Decimal:
+                    t = exp.GenCode();
+                    switch (type)
+                    {
+                        case "int":
+                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([4 x i8] * @writeInt to i8 *), i32 {0})", t);
+                            break;
+                        case "double":
+                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([5 x i8] * @writeDouble to i8 *), double {0})", t);
+                            break;
+                        case "bool":
+                            string truelab, falselab, endlab;
+                            truelab = Compiler.NewTemp();
+                            truelab = truelab.Remove(0, 1);
+                            falselab = Compiler.NewTemp();
+                            falselab = falselab.Remove(0, 1);
+                            Compiler.EmitCode($"br i1 {t}, label %{truelab}, label %{falselab}");
+
+                            Compiler.EmitCode($"{truelab}:");
+                            string tw = Compiler.NewTemp();
+                            Compiler.EmitCode("{0} = getelementptr [5 x i8], [5 x i8]* @strTrue, i32 0, i32 0", tw);
+                            Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
+
+                            endlab = Compiler.NewTemp();
+                            endlab = endlab.Remove(0, 1);
+                            Compiler.EmitCode($"br label %{endlab}");
+
+                            Compiler.EmitCode($"{falselab}:");
+                            tw = Compiler.NewTemp();
+                            Compiler.EmitCode("{0} = getelementptr [6 x i8], [6 x i8]* @strFalse, i32 0, i32 0", tw);
+                            Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
+
+                            Compiler.EmitCode($"br label %{endlab}");
+                            Compiler.EmitCode($"{endlab}:");
+                            break;
+                        default:
+                            break;
+                    }
                     break;
-                case "double":
-                    Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([5 x i8] * @writeDouble to i8 *), double {0})", t);
+                case WriteType.Hexadecimal:
+                    t = exp.GenCode();
+                    Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([6 x i8] * @writeIntHex to i8 *), i32 {0})", t);
                     break;
-                case "i1":
+                case WriteType.Literal:
+                    string ident = Compiler.GetLiteralId(literal);
+                    if (ident != null)
+                    {
+                        string tw = Compiler.NewTemp();
+                        int len = literal.Length - 1;
+                        Compiler.EmitCode("{0} = getelementptr [{1} x i8], [{1} x i8]* {2}, i32 0, i32 0", tw, len, ident);
+                        Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
+                    }
                     break;
                 default:
                     break;
@@ -91,7 +131,10 @@ namespace Compiler.AST
         {
             Console.WriteLine(delim + elementType);
             delim += "\t";
-            exp.Print(delim);
+            if (op == WriteType.Literal)
+                Console.WriteLine(delim + literal);
+            else
+                exp.Print(delim);
         }
     }
 }

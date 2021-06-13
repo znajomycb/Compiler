@@ -12,38 +12,26 @@ namespace Compiler.AST
 
         public Ident(string name)
         {
-            string type = Compiler.GetIdentType(name);
-            if (type == null)
-            {
-                throw new ErrorException($"Variable {name} is not declared!");
-            } 
-            else
-            {
-                this.type = type;
-            }
-            elementType = ElementType.Ident;
             this.name = name;
             this.value = null;
+            elementType = ElementType.Ident;
         }
 
         public Ident(string name, string value)
         {
-            string type = Compiler.GetIdentType(name);
-            if (type == null)
-            {
-                throw new ErrorException($"Variable {name} is not declared!");
-            }
-            else
-            {
-                this.type = type;
-            }
-            elementType = ElementType.Ident;
             this.name = name;
             this.value = value;
+            elementType = ElementType.Ident;
         }
 
         public override string CheckType()
         {
+            string tt = Compiler.GetIdentType(name);
+
+            if (tt == null)
+                throw new ErrorException($"Variable {name} is not declared!");
+     
+            type = tt;
             return type;
         }
 

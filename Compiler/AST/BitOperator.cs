@@ -10,6 +10,7 @@ namespace Compiler.AST
         Or,
         And
     }
+
     public class BitOperator : SyntaxTree
     {
         private SyntaxTree left;
@@ -37,7 +38,8 @@ namespace Compiler.AST
             if (ll != "int" || rr != "int")
                 throw new ErrorException($"Inappropriate types for bit operator in line {line}", false);
 
-            return ll;
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -47,7 +49,23 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            throw new NotImplementedException();
+            string ll = left.GenCode();
+            string rr = right.GenCode();
+
+            string tw = Compiler.NewTemp();
+            switch (op)
+            {
+                case BitType.Or:
+                    Compiler.EmitCode("{0} = or i32 {1}, {2}", tw, ll, rr);
+                    break;
+                case BitType.And:
+                    Compiler.EmitCode("{0} = and i32 {1}, {2}", tw, ll, rr);
+                    break;
+                default:
+                    break;
+            }
+
+            return tw;
         }
 
         public override void Print(string delim)

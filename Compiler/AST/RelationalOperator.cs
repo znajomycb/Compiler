@@ -36,26 +36,49 @@ namespace Compiler.AST
             string ll = left.CheckType();
             string rr = right.CheckType();
 
-            if (ll == null || rr == null) throw new ErrorException($"Semantic error in line {line}", false);
+            if (ll == null || rr == null) 
+                throw new ErrorException($"Inappropriate types for relational operator in line {line}", false);
 
             switch (op)
             {
                 case RelationalType.Equal:
+                    if ((ll == "bool" && rr != ll) || (rr == "bool" && ll != rr))
+                        throw new ErrorException($"Operator '==' cannot be applied in line {line}", false);
+                    break;
                 case RelationalType.NotEqual:
-                    if (ll != rr) throw new ErrorException($"Semantic error in line {line}", false);
+                    if ((ll == "bool" && rr != ll) || (rr == "bool" && ll != rr)) 
+                        throw new ErrorException($"Operator '!=' cannot be applied in line {line}", false);
                     break;
                 case RelationalType.Greater:
+                    if (ll == "bool" || rr == "bool")
+                        throw new ErrorException($"Operator '>' cannot be applied in line {line}", false);
+                    if (ll != rr)
+                        type = "double";
+                    break;
                 case RelationalType.GreaterOrEqual:
+                    if (ll == "bool" || rr == "bool")
+                        throw new ErrorException($"Operator '>=' cannot be applied in line {line}", false);
+                    if (ll != rr)
+                        ll = "double";
+                    break;
                 case RelationalType.Less:
+                    if (ll == "bool" || rr == "bool")
+                        throw new ErrorException($"Operator '<' cannot be applied in line {line}", false);
+                    if (ll != rr)
+                        ll = "double";
+                    break;
                 case RelationalType.LessOrEqual:
-                    if (ll != rr) throw new ErrorException($"Semantic error in line {line}", false);
-                    if (ll == "bool") throw new ErrorException($"Semantic error in line {line}", false);
+                    if (ll == "bool" || rr == "bool")
+                        throw new ErrorException($"Operator '<=' cannot be applied in line {line}", false);
+                    if (ll != rr)
+                        ll = "double";
                     break;
                 default:
-                    throw new ErrorException($"Semantic error in line {line}", false);
+                    throw new ErrorException($"Inappropriate types for relational operator in line {line}", false);
             }
 
-            return ll;
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -68,13 +91,29 @@ namespace Compiler.AST
             string tw, t1, t2, t3, t4, tt;
 
             t1 = left.GenCode();
-            t2 = t1;
-
+            if (type != left.type)
+            {
+                t2 = Compiler.NewTemp();
+                Compiler.EmitCode($"{t2} = sitofp i32 {t1} to double");
+            }
+            else
+            {
+                t2 = t1;
+            }
+            
             t3 = right.GenCode();
-            t4 = t3;
+            if (type != right.type)
+            {
+                t4 = Compiler.NewTemp();
+                Compiler.EmitCode($"{t4} = sitofp i32 {t3} to double");
+            } 
+            else
+            {
+                t4 = t3;
+            }  
 
             tw = Compiler.NewTemp();
-            tt = "i32";
+            tt = Compiler.ToLLVMType(type);
             switch (op)
             {
                 case RelationalType.Equal:

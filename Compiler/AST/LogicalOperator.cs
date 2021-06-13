@@ -10,23 +10,35 @@ namespace Compiler.AST
         Or,
         And
     }
+
     public class LogicalOperator : SyntaxTree
     {
         public SyntaxTree left;
         public SyntaxTree right;
 
         public LogicalType op;
-        public LogicalOperator(SyntaxTree left, SyntaxTree right, LogicalType op)
+        public LogicalOperator(SyntaxTree left, SyntaxTree right, LogicalType op, int line)
         {
             this.left = left;
             this.right = right;
             this.op = op;
+            this.line = line;
             elementType = ElementType.Logical_op;
         }
 
         public override string CheckType()
         {
-            return null;
+            string ll = left.CheckType();
+            string rr = right.CheckType();
+
+            if (ll == null || rr == null)
+                throw new ErrorException($"Inappropriate types for logical operator in line {line}", false);
+
+            if (ll != "bool" || rr != "bool")
+                throw new ErrorException($"Inappropriate types for logical operator in line {line}", false);
+
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -36,131 +48,84 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string res = null;
-            string tw, t1, t2, t3, t4, tt;
-
+            string ll, rr, t1, t2;
             t1 = left.GenCode();
-            t2 = t1;
-
-            t3 = right.GenCode();
-            t4 = t3;
+            t2 = right.GenCode();
 
             string trueLeft, falseLeft, endLeft;
+            trueLeft = Compiler.NewTemp();
+            trueLeft = trueLeft.Remove(0, 1);
+
+            falseLeft = Compiler.NewTemp();
+            falseLeft = falseLeft.Remove(0, 1);
+
+            endLeft = Compiler.NewTemp();
+            endLeft = endLeft.Remove(0, 1);
+
             string trueRight, falseRight, endRight;
+            trueRight = Compiler.NewTemp();
+            trueRight = trueRight.Remove(0, 1);
+
+            falseRight = Compiler.NewTemp();
+            falseRight = falseRight.Remove(0, 1);
+
+            endRight = Compiler.NewTemp();
+            endRight = endRight.Remove(0, 1);
+
+            string res = Compiler.NewTemp();
+            Compiler.EmitCode("{0} = alloca i1", res);
 
             switch (op)
             {
                 case LogicalType.Or:
-                    tw = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = icmp eq i1 false, {1}", tw, t2);
+                    ll = Compiler.NewTemp();
+                    Compiler.EmitCode("{0} = icmp eq i1 false, {1}", ll, t1);
+                    Compiler.EmitCode($"br i1 {ll}, label %{trueLeft}, label %{falseLeft}");
 
-                    trueLeft = Compiler.NewTemp();
-                    trueLeft = trueLeft.Remove(0, 1);
+                    Compiler.EmitCode($"{trueLeft}:");              // left is false
+                    rr = Compiler.NewTemp();
+                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", rr, t2);
+                    Compiler.EmitCode($"br i1 {rr}, label %{trueRight}, label %{falseRight}");
 
-                    falseLeft = Compiler.NewTemp();
-                    falseLeft = falseLeft.Remove(0, 1);
-
-                    endLeft = Compiler.NewTemp();
-                    endLeft = endLeft.Remove(0, 1);
-
-                    Compiler.EmitCode($"br i1 {tw}, label %{trueLeft}, label %{falseLeft}");
-                    Compiler.EmitCode($"{trueLeft}:");
-
-                    tt = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", tt, t4);
-
-                    trueRight = Compiler.NewTemp();
-                    trueRight = trueRight.Remove(0, 1);
-
-                    falseRight = Compiler.NewTemp();
-                    falseRight = falseRight.Remove(0, 1);
-
-                    endRight = Compiler.NewTemp();
-                    endRight = endRight.Remove(0, 1);
-
-                    Compiler.EmitCode($"br i1 {tt}, label %{trueRight}, label %{falseRight}");
-                    Compiler.EmitCode($"{trueRight}:");
-
-                    //Left is false, right is true
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+                    Compiler.EmitCode($"{trueRight}:");             //left is false, right is true
                     Compiler.EmitCode("store i1 true, i1* {0}", res);
-
                     Compiler.EmitCode($"br label %{endRight}");
-                    Compiler.EmitCode($"{falseRight}:");
-
-                    //Both are false
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+                    
+                    Compiler.EmitCode($"{falseRight}:");            // left is false, right is false
                     Compiler.EmitCode("store i1 false, i1* {0}", res);
-
                     Compiler.EmitCode($"br label %{endRight}");
+
                     Compiler.EmitCode($"{endRight}:");
-
                     Compiler.EmitCode($"br label %{endLeft}");
-                    Compiler.EmitCode($"{falseLeft}:");
-
-                    //Left is true
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+        
+                    Compiler.EmitCode($"{falseLeft}:");             //left is true
                     Compiler.EmitCode("store i1 true, i1* {0}", res);
 
                     Compiler.EmitCode($"br label %{endLeft}");
                     Compiler.EmitCode($"{endLeft}:");
                     break;
                 case LogicalType.And:
-                    tw = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", tw, t2);
-
-                    trueLeft = Compiler.NewTemp();
-                    trueLeft = trueLeft.Remove(0, 1);
-
-                    falseLeft = Compiler.NewTemp();
-                    falseLeft = falseLeft.Remove(0, 1);
-
-                    endLeft = Compiler.NewTemp();
-                    endLeft = endLeft.Remove(0, 1);
-
-                    Compiler.EmitCode($"br i1 {tw}, label %{trueLeft}, label %{falseLeft}");
-                    Compiler.EmitCode($"{trueLeft}:");
-
-                    tt = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", tt, t4);
-
-                    trueRight = Compiler.NewTemp();
-                    trueRight = trueRight.Remove(0, 1);
-
-                    falseRight = Compiler.NewTemp();
-                    falseRight = falseRight.Remove(0, 1);
-
-                    endRight = Compiler.NewTemp();
-                    endRight = endRight.Remove(0, 1);
-
-                    Compiler.EmitCode($"br i1 {tt}, label %{trueRight}, label %{falseRight}");
-                    Compiler.EmitCode($"{trueRight}:");
-
-                    //Both are true
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+                    ll = Compiler.NewTemp();
+                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", ll, t1);
+                    Compiler.EmitCode($"br i1 {ll}, label %{trueLeft}, label %{falseLeft}");
+                    
+                    Compiler.EmitCode($"{trueLeft}:");              //left is true
+                    rr = Compiler.NewTemp();
+                    Compiler.EmitCode("{0} = icmp eq i1 true, {1}", rr, t2);
+                    Compiler.EmitCode($"br i1 {rr}, label %{trueRight}, label %{falseRight}");
+                    
+                    Compiler.EmitCode($"{trueRight}:");             //left is true, right is true
                     Compiler.EmitCode("store i1 true, i1* {0}", res);
-
                     Compiler.EmitCode($"br label %{endRight}");
-                    Compiler.EmitCode($"{falseRight}:");
 
-                    //Right is false
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+                    Compiler.EmitCode($"{falseRight}:");            //left is true, right is false
                     Compiler.EmitCode("store i1 false, i1* {0}", res);
-
                     Compiler.EmitCode($"br label %{endRight}");
+
                     Compiler.EmitCode($"{endRight}:");
-
                     Compiler.EmitCode($"br label %{endLeft}");
-                    Compiler.EmitCode($"{falseLeft}:");
 
-                    //Left is false
-                    res = Compiler.NewTemp();
-                    Compiler.EmitCode("{0} = alloca i1", res);
+                    Compiler.EmitCode($"{falseLeft}:");             //left is false
                     Compiler.EmitCode("store i1 false, i1* {0}", res);
 
                     Compiler.EmitCode($"br label %{endLeft}");
@@ -169,6 +134,7 @@ namespace Compiler.AST
                 default:
                     break;
             }
+
             return res;
         }
 

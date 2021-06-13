@@ -50,16 +50,19 @@ namespace Compiler.AST
                         throw new ErrorException($"Inappropriate type for logical negation operator in line {line}", false);
                     break;
                 case UnaryType.ToInt:
+                    ll = "int";
                     break;
                 case UnaryType.ToDouble:
                     if (ll == "bool")
                         throw new ErrorException($"Inappropriate type for conversation to double operator in line {line}", false);
+                    ll = "double";
                     break;
                 default:
                     throw new ErrorException($"Inappropriate type for unary operator in line {line}", false);
             }
 
-            return ll;
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -69,7 +72,64 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            throw new NotImplementedException();
+            string tw, t2;
+            
+            tw = Compiler.NewTemp();
+            t2 = exp.GenCode();
+            //invalid operand type for instrcution
+            switch (op)
+            {
+                case UnaryType.Plus:
+                    break;
+                case UnaryType.Minus:
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "mul i32" : "fmul double", t2, type == "int" ? "-1" : "-1.0");
+                    break;
+                case UnaryType.BitNot:
+                    Compiler.EmitCode("{0} = xor i32 -1, {1}", tw, t2);
+                    break;
+                case UnaryType.Not:
+                    string truelab, falselab, endlab;
+                    truelab = Compiler.NewTemp();
+                    truelab = truelab.Remove(0, 1);
+                    falselab = Compiler.NewTemp();
+                    falselab = falselab.Remove(0, 1);
+
+                    Compiler.EmitCode("{0}$ = alloca i1", tw);
+                    Compiler.EmitCode($"br i1 {t2}, label %{truelab}, label %{falselab}");
+
+                    Compiler.EmitCode($"{truelab}:");
+                    Compiler.EmitCode("store i1 false, i1* {0}$", tw);
+
+                    endlab = Compiler.NewTemp();
+                    endlab = endlab.Remove(0, 1);
+                    Compiler.EmitCode($"br label %{endlab}");
+
+                    Compiler.EmitCode($"{falselab}:");
+                    Compiler.EmitCode("store i1 true, i1* {0}$", tw);        
+
+                    Compiler.EmitCode($"br label %{endlab}");
+                    Compiler.EmitCode($"{endlab}:");
+                    Compiler.EmitCode("{0} = load i1, i1* {0}$", tw);
+                    break;
+                case UnaryType.ToInt:
+                    if (type == "int")
+                        tw = t2;
+                    if (type == "double")
+                        Compiler.EmitCode("{0} = fptosi double {1} to i32", tw, t2);
+                    if (type == "bool")
+                        Compiler.EmitCode("{0} = zext i1 {1} to i32", tw, t2);
+                    break;
+                case UnaryType.ToDouble:
+                    if (type == "int")
+                        Compiler.EmitCode("{0} = sitofp i32 {1} to double", tw, t2);
+                    else
+                        tw = t2;
+                    break;
+                default:
+                    break;
+            }
+
+            return tw;
         }
 
         public override void Print(string delim)

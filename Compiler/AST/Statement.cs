@@ -34,9 +34,8 @@ namespace Compiler.AST
         public override string GenCode()
         {
             for (int i = 0; i < children.Count; i++)
-            {
                 children[i].GenCode();
-            }
+
             return null;
         }
 
@@ -45,9 +44,7 @@ namespace Compiler.AST
             Console.WriteLine(delim + elementType);
             delim += "\t";
             for (int i = 0; i < children.Count; i++)
-            {
                 children[i].Print(delim);
-            }
         }
     }
 }

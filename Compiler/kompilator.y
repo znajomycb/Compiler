@@ -217,14 +217,20 @@ write
     :   Write exp SemiColon
         {
             $$ = new Write($2, WriteType.Decimal, @1.StartLine);
+            $$.CheckType();
         }
     |   Write exp Comma IntHex SemiColon
         {
             $$ = new Write($2, WriteType.Hexadecimal, @1.StartLine);
+            $$.CheckType();
         }
-    |   Write Literal
+    |   Write Literal SemiColon
         {
             $$ = new Write($2, @1.StartLine);
+            $$.CheckType();
+            string tt = Compiler.NewTemp();
+            tt = "@" + tt.Substring(1);
+            Compiler.literal.Add($2, tt);
         }
     ;
 
@@ -250,11 +256,11 @@ exp
 logic
     :   logic Or relat
         {
-            $$ = new LogicalOperator($1, $3, LogicalType.Or);
+            $$ = new LogicalOperator($1, $3, LogicalType.Or, @2.StartLine);
         }
     |   logic And relat
         {
-            $$ = new LogicalOperator($1, $3, LogicalType.And);
+            $$ = new LogicalOperator($1, $3, LogicalType.And, @2.StartLine);
         }
     |   relat
         {
@@ -395,6 +401,7 @@ factor
     |   Ident
         {
             $$ = new Ident($1);
+            $$.CheckType();
         }
     |   IntNumber
         {
@@ -406,11 +413,11 @@ factor
         }
     |   True
         {
-            $$ = new Variable("bool", "True");
+            $$ = new Variable("bool", "true");
         }
     |   False
         {
-            $$ = new Variable("bool", "False");
+            $$ = new Variable("bool", "false");
         }
     ;
 

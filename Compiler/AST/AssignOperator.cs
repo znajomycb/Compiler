@@ -21,19 +21,22 @@ namespace Compiler.AST
         public override string CheckType()
         {
             if (left.elementType != ElementType.Ident)
-                throw new ErrorException($"Left argument of an assign operator is not an identifier in line {line}", false);
-            //Compiler.PrintSemanticError("Left argument of an assign operator is not an identifier in line", line);
+                throw new ErrorException($"Left argument of operator '=' is not an identifier in line {line}", false);
 
             string ll = left.CheckType();
             string rr = right.CheckType();
 
             if (ll == null || rr == null)
-                throw new ErrorException($"Inappropriate types for an assign operator in line {line}", false);
+                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
 
-            if (ll != rr)
-                throw new ErrorException($"Types do not match for an assign operator in line {line}", false);
+            if (ll != "double" && rr != ll)
+                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
 
-            return ll;
+            if (ll == "double" && rr == "bool")
+                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
+
+            type = ll;
+            return type;
         }
 
         public override int Count()
@@ -43,15 +46,23 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string t1, t2;
+            string t1, t2, t3;
 
             t1 = (left as Ident).name;
             t2 = right.GenCode();
+            if (type != right.type)
+            {
+                t3 = Compiler.NewTemp();
+                Compiler.EmitCode($"{t3} = sitofp i32 {t2} to double");
+            }
+            else
+            {
+                t3 = t2;
+            }
 
-            string tt = CheckType();
-            tt = Compiler.ToLLVMType(tt);
+            string tt = Compiler.ToLLVMType(type);
+            Compiler.EmitCode("store {0} {1}, {0}* %{2}$", tt, t3, t1);
 
-            Compiler.EmitCode("store {0} {1}, {0}* %{2}$", tt, t2, t1);
             string tw = (left as Ident).GenCode();
             return tw;
         }

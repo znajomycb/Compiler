@@ -12,6 +12,7 @@ namespace Compiler.AST
         Multiplication,
         Division
     }
+
     public class ArithOperator : SyntaxTree
     {
         public SyntaxTree left;
@@ -39,10 +40,8 @@ namespace Compiler.AST
             if (ll == "bool" || rr == "bool")
                 throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
 
-            if (ll != rr)
-                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
-
-            return ll;
+            type = ll == rr ? ll : "double";
+            return type;
         }
 
         public override int Count()
@@ -52,30 +51,44 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string tw, t1, t2, t3, t4, tt;
+            string tw, t1, t2, t3, t4;
 
             t1 = left.GenCode();
-            t2 = t1;
+            if (type != left.type)
+            {
+                t2 = Compiler.NewTemp();
+                Compiler.EmitCode($"{t2} = sitofp i32 {t1} to double");
+            }
+            else
+            {
+                t2 = t1;
+            }
  
             t3 = right.GenCode();
-            t4 = t3;
+            if (type != right.type)
+            {
+                t4 = Compiler.NewTemp();
+                Compiler.EmitCode($"{t4} = sitofp i32 {t3} to double");
+            } 
+            else
+            {
+                t4 = t3;
+            }
  
             tw = Compiler.NewTemp();
-            string ttype = CheckType();
-
             switch (op)
             {
                 case ArithType.Addition:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "add i32" : "fadd double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "add i32" : "fadd double", t2, t4);
                     break;
                 case ArithType.Substraction:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "sub i32" : "fsub double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "sub i32" : "fsub double", t2, t4);
                     break;
                 case ArithType.Multiplication:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "mul i32" : "fmul double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "mul i32" : "fmul double", t2, t4);
                     break;
                 case ArithType.Division:
-                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, ttype == "int" ? "sdiv i32" : "fdiv double", t2, t4);
+                    Compiler.EmitCode("{0} = {1} {2}, {3}", tw, type == "int" ? "sdiv i32" : "fdiv double", t2, t4);
                     break;
                 default:
                     throw new ErrorException($"internal gencode error", false);
