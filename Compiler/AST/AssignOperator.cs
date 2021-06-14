@@ -21,19 +21,19 @@ namespace Compiler.AST
         public override string CheckType()
         {
             if (left.elementType != ElementType.Ident)
-                throw new ErrorException($"Left argument of operator '=' is not an identifier in line {line}", false);
+                throw new ErrorException($"semantic error - left argument of operator '=' is not an identifier in line {line}!", false);
 
             string ll = left.CheckType();
             string rr = right.CheckType();
 
             if (ll == null || rr == null)
-                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for assign operator in line {line}!", false);
 
             if (ll != "double" && rr != ll)
-                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
+                throw new ErrorException($"semantic error - operator '=' cannot be applied in line {line}!", false);
 
             if (ll == "double" && rr == "bool")
-                throw new ErrorException($"Operator '=' cannot be applied in line {line}", false);
+                throw new ErrorException($"semantic error - operator '=' cannot be applied in line {line}!", false);
 
             type = ll;
             return type;

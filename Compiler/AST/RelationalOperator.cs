@@ -37,48 +37,52 @@ namespace Compiler.AST
             string rr = right.CheckType();
 
             if (ll == null || rr == null) 
-                throw new ErrorException($"Inappropriate types for relational operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for relational operator in line {line}!", false);
 
             switch (op)
             {
                 case RelationalType.Equal:
                     if ((ll == "bool" && rr != ll) || (rr == "bool" && ll != rr))
-                        throw new ErrorException($"Operator '==' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '==' cannot be applied in line {line}!", false);
+                    if (ll != rr)
+                        ll = "double";
                     break;
                 case RelationalType.NotEqual:
                     if ((ll == "bool" && rr != ll) || (rr == "bool" && ll != rr)) 
-                        throw new ErrorException($"Operator '!=' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '!=' cannot be applied in line {line}!", false);
+                    if (ll != rr)
+                        ll = "double";
                     break;
                 case RelationalType.Greater:
                     if (ll == "bool" || rr == "bool")
-                        throw new ErrorException($"Operator '>' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '>' cannot be applied in line {line}!", false);
                     if (ll != rr)
-                        type = "double";
+                        ll = "double";
                     break;
                 case RelationalType.GreaterOrEqual:
                     if (ll == "bool" || rr == "bool")
-                        throw new ErrorException($"Operator '>=' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '>=' cannot be applied in line {line}!", false);
                     if (ll != rr)
                         ll = "double";
                     break;
                 case RelationalType.Less:
                     if (ll == "bool" || rr == "bool")
-                        throw new ErrorException($"Operator '<' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '<' cannot be applied in line {line}!", false);
                     if (ll != rr)
                         ll = "double";
                     break;
                 case RelationalType.LessOrEqual:
                     if (ll == "bool" || rr == "bool")
-                        throw new ErrorException($"Operator '<=' cannot be applied in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '<=' cannot be applied in line {line}!", false);
                     if (ll != rr)
                         ll = "double";
                     break;
                 default:
-                    throw new ErrorException($"Inappropriate types for relational operator in line {line}", false);
+                    throw new ErrorException($"semantic error - invalid operand type for relational operator in line {line}!", false);
             }
 
             type = ll;
-            return type;
+            return "bool";
         }
 
         public override int Count()
@@ -114,29 +118,50 @@ namespace Compiler.AST
 
             tw = Compiler.NewTemp();
             tt = Compiler.ToLLVMType(type);
+            string comm;
+
             switch (op)
             {
                 case RelationalType.Equal:
-                    Compiler.EmitCode("{0} = icmp eq {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp eq";
+                    if (tt == "double")
+                        comm = "fcmp oeq";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 case RelationalType.NotEqual:
-                    Compiler.EmitCode("{0} = icmp ne {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp ne";
+                    if (tt == "double")
+                        comm = "fcmp one";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 case RelationalType.Greater:
-                    Compiler.EmitCode("{0} = icmp sgt {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp sgt";
+                    if (tt == "double")
+                        comm = "fcmp ogt";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 case RelationalType.GreaterOrEqual:
-                    Compiler.EmitCode("{0} = icmp sge {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp sge";
+                    if (tt == "double")
+                        comm = "fcmp oge";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 case RelationalType.Less:
-                    Compiler.EmitCode("{0} = icmp slt {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp slt";
+                    if (tt == "double")
+                        comm = "fcmp olt";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 case RelationalType.LessOrEqual:
-                    Compiler.EmitCode("{0} = icmp sle {1} {2}, {3}", tw, tt, t2, t4);
+                    comm = "icmp sle";
+                    if (tt == "double")
+                        comm = "fcmp ole";
+                    Compiler.EmitCode("{0} = {4} {1} {2}, {3}", tw, tt, t2, t4, comm);
                     break;
                 default:
                     throw new ErrorException($"internal gencode error", false);
             }
+
             return tw;
         }
 

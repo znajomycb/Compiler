@@ -23,7 +23,7 @@ namespace Compiler.AST
         {
             string ll = left.CheckType();
             if (ll != "bool")
-                throw new ErrorException($"Expression type in 'while' must be a boolean!", false);
+                throw new ErrorException($"semantic error - expression type in 'while' must be a boolean!", false);
 
             type = ll;
             return type;

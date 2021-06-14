@@ -37,7 +37,7 @@ namespace Compiler.AST
         {
             string tt = exp.CheckType();
             if (tt == null)
-                throw new ErrorException($"Inappropriate type for write instruction in line {line}", false);
+                throw new ErrorException($"semantic error - invalid type for 'write' instruction in line {line}!", false);
             
             switch (op)
             {
@@ -45,9 +45,7 @@ namespace Compiler.AST
                     break;
                 case WriteType.Hexadecimal:
                     if (tt != "int")
-                        throw new ErrorException($"Inappropriate type for write instruction in line {line}", false);
-                    break;
-                case WriteType.Literal:
+                        throw new ErrorException($"semantic error - invalid type for 'write' instruction in line {line}!", false);
                     break;
                 default:
                     break;
@@ -72,10 +70,10 @@ namespace Compiler.AST
                     switch (type)
                     {
                         case "int":
-                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([4 x i8] * @writeInt to i8 *), i32 {0})", t);
+                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([3 x i8] * @writeInt to i8 *), i32 {0})", t);
                             break;
                         case "double":
-                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([5 x i8] * @writeDouble to i8 *), double {0})", t);
+                            Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([4 x i8] * @writeDouble to i8 *), double {0})", t);
                             break;
                         case "bool":
                             string truelab, falselab, endlab;
@@ -104,12 +102,12 @@ namespace Compiler.AST
                             Compiler.EmitCode($"{endlab}:");
                             break;
                         default:
-                            break;
+                            throw new ErrorException($"internal gencode error", false);
                     }
                     break;
                 case WriteType.Hexadecimal:
                     t = exp.GenCode();
-                    Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([6 x i8] * @writeIntHex to i8 *), i32 {0})", t);
+                    Compiler.EmitCode("call i32(i8 *, ...) @printf(i8 * bitcast([5 x i8] * @writeIntHex to i8 *), i32 {0})", t);
                     break;
                 case WriteType.Literal:
                     string ident = Compiler.GetLiteralId(literal);
@@ -117,12 +115,15 @@ namespace Compiler.AST
                     {
                         string tw = Compiler.NewTemp();
                         int len = literal.Length - 1;
+                        if (literal == "\"\\n\"") 
+                            len = 2;
+ 
                         Compiler.EmitCode("{0} = getelementptr [{1} x i8], [{1} x i8]* {2}, i32 0, i32 0", tw, len, ident);
                         Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);
                     }
                     break;
                 default:
-                    break;
+                    throw new ErrorException($"internal gencode error", false);
             }
             
             return null;

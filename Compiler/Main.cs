@@ -9,15 +9,14 @@ namespace Compiler
 {
     public class Compiler
     {
-        public static Hashtable table = new Hashtable();
-        public static Hashtable literal = new Hashtable();
+        public static Dictionary<string, string> table = new Dictionary<string, string>();
+        public static Dictionary<string, string> literal = new Dictionary<string, string>();
 
-        public static int errors = 0;
-        public static List<string> source;
-
-        private static StreamWriter sw;
         private static int nr;
+        public static int errors = 0;
+        private static StreamWriter sw;
 
+        public static List<string> source;
         public static List<SyntaxTree> code = new List<SyntaxTree>();
 
         // arg[0] określa plik źródłowy
@@ -26,14 +25,17 @@ namespace Compiler
         {
             string file;
             FileStream fileStream;
-            Console.WriteLine("Hello!");
+
             if (args.Length >= 1)
+            {
                 file = args[0];
+            }
             else
             {
                 Console.Write("\nsource file:  ");
                 file = Console.ReadLine();
             }
+
             try
             {
                 var sr = new StreamReader(file);
@@ -47,6 +49,7 @@ namespace Compiler
                 Console.WriteLine("\n" + e.Message);
                 return 1;
             }
+
             Scanner scanner = new Scanner(fileStream);
             Parser parser = new Parser(scanner);
             Console.WriteLine();
@@ -56,12 +59,13 @@ namespace Compiler
             }
             catch (ErrorException e)
             {
-                Console.WriteLine(e.Message + " " + e.line);
+                Console.WriteLine("\t" + e.Message);
             }
             catch (Exception e)
             {
-                Console.WriteLine("\n" + e.Message);
+                Console.WriteLine("\t" + e.Message);
             }
+
             fileStream.Close();
             Console.WriteLine();
             if (errors == 0)
@@ -69,10 +73,13 @@ namespace Compiler
                 sw = new StreamWriter(file + ".ll");
                 GenCode();
                 sw.Close();
-                Console.Write("Compilation success!");
+                Console.Write("\n\t" + "compilation successful!");
             }
             else
+            {
                 Console.Write($"\n  {errors} errors detected\n");
+            }
+                
             return errors == 0 ? 0 : 2;
         }
        
@@ -99,9 +106,9 @@ namespace Compiler
             EmitCode("@readIntHex = constant [3 x i8] c\"%x\\00\"");
             EmitCode("@readDouble = constant [4 x i8] c\"%lf\\00\"");
 
-            EmitCode("@writeInt = constant [4 x i8] c\"%d\\0A\\00\"");
-            EmitCode("@writeIntHex = constant [6 x i8] c\"0X%X\\0A\\00\"");
-            EmitCode("@writeDouble = constant [5 x i8] c\"%lf\\0A\\00\"");
+            EmitCode("@writeInt = constant [3 x i8] c\"%d\\00\"");
+            EmitCode("@writeIntHex = constant [5 x i8] c\"0X%X\\00\"");
+            EmitCode("@writeDouble = constant [4 x i8] c\"%lf\\00\"");
  
             EmitCode("declare i32 @printf(i8*, ...)");
             EmitCode("declare i32 @scanf(i8*, ...)");
@@ -109,21 +116,29 @@ namespace Compiler
             EmitCode("@strTrue = private constant [5 x i8] c\"True\\00\"");
             EmitCode("@strFalse = private constant [6 x i8] c\"False\\00\"");
 
-            foreach (DictionaryEntry x in literal)
+            foreach (var x in literal)
             {
-                string str = x.Key.ToString();
+                string str = x.Key;
                 int len = str.Length - 1;
-                str = str.Substring(0, len) + "\\00\"";
-                string tt = x.Value.ToString();
+                if (str == "\"\\n\"")
+                {
+                    str = "\"\\0A\\00\"";
+                    len = 2;
+                } 
+                else
+                {
+                    str = str.Substring(0, len) + "\\00\"";
+                }
+                string tt = x.Value;
                 EmitCode("{0} = private constant [{1} x i8] c{2}", tt, len, str);
             }
 
             EmitCode("define i32 @main()");
             EmitCode("{");
+
             for (int i = 0; i < code.Count; ++i)
-            {
                 code[i].GenCode();
-            }
+
             EmitCode("ret i32 0");
             EmitCode("}");
         }
@@ -131,18 +146,16 @@ namespace Compiler
         public static string GetIdentType(string name)
         {
             if (table.ContainsKey(name))
-            {
-                return table[name].ToString();
-            }
+                return table[name];
+
             return null;
         }
 
         public static string GetLiteralId(string name)
         {
             if (literal.ContainsKey(name))
-            {
-                return literal[name].ToString();
-            }
+                return literal[name];
+
             return null;
         }
 
@@ -159,13 +172,8 @@ namespace Compiler
                 default:
                     break;
             }
-            return null;
-        }
 
-        public static void PrintSemanticError(string message, int line = -1)
-        {
-            ++errors;
-            Console.WriteLine(message + " " + line);
+            return null;
         }
     }
 
@@ -198,21 +206,19 @@ namespace Compiler
 
     public abstract class SyntaxTree
     {
+        public ElementType elementType;
         public string type = null;
         public int line = -1;
-        public ElementType elementType;
         public abstract int Count();
-        public abstract void Print(string delim);
         public abstract string CheckType();
         public abstract string GenCode();
+        public abstract void Print(string delim);
     }
 
     class ErrorException : ApplicationException
     {
         public readonly bool Recovery;
-        public int line = -1;
         public ErrorException(bool rec = true) { ++Compiler.errors; Recovery = rec; }
-        public ErrorException(string msg, int line) : base(msg) { ++Compiler.errors; Recovery = false; this.line = line; }
         public ErrorException(string msg, bool rec = true) : base(msg) { ++Compiler.errors; Recovery = rec; }
         public ErrorException(string msg, Exception ex, bool rec = true) : base(msg, ex) { ++Compiler.errors; Recovery = rec; }
     }

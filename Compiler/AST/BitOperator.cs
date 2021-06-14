@@ -33,10 +33,15 @@ namespace Compiler.AST
             string rr = right.CheckType();
 
             if (ll == null || rr == null)
-                throw new ErrorException($"Inappropriate types for bit operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for bit operator in line {line}!", false);
 
             if (ll != "int" || rr != "int")
-                throw new ErrorException($"Inappropriate types for bit operator in line {line}", false);
+            {
+                if (op == BitType.Or)
+                    throw new ErrorException($"semantic error - operator '|' cannot be applied in line {line}!", false);
+                else
+                    throw new ErrorException($"semantic error - operator '&' cannot be applied in line {line}!", false);
+            }        
 
             type = ll;
             return type;
@@ -62,7 +67,7 @@ namespace Compiler.AST
                     Compiler.EmitCode("{0} = and i32 {1}, {2}", tw, ll, rr);
                     break;
                 default:
-                    break;
+                    throw new ErrorException($"internal gencode error", false);
             }
 
             return tw;

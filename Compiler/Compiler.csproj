@@ -48,7 +48,6 @@
     <Compile Include="AST\AssignOperator.cs" />
     <Compile Include="AST\BitOperator.cs" />
     <Compile Include="AST\Declar.cs" />
-    <Compile Include="AST\Expression.cs" />
     <Compile Include="AST\Ident.cs" />
     <Compile Include="AST\IfElse.cs" />
     <Compile Include="AST\IfOnly.cs" />
@@ -70,5 +69,6 @@
     <None Include="kompilator.lex" />
     <None Include="kompilator.y" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

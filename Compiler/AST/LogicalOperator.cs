@@ -32,10 +32,15 @@ namespace Compiler.AST
             string rr = right.CheckType();
 
             if (ll == null || rr == null)
-                throw new ErrorException($"Inappropriate types for logical operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for logical operator in line {line}!", false);
 
             if (ll != "bool" || rr != "bool")
-                throw new ErrorException($"Inappropriate types for logical operator in line {line}", false);
+            {
+                if (op == LogicalType.Or)
+                    throw new ErrorException($"semantic error - operator '||' cannot be applied in line {line}!", false);
+                else
+                    throw new ErrorException($"semantic error - operator '&&' cannot be applied in line {line}!", false);
+            }
 
             type = ll;
             return type;
@@ -48,10 +53,6 @@ namespace Compiler.AST
 
         public override string GenCode()
         {
-            string ll, rr, t1, t2;
-            t1 = left.GenCode();
-            t2 = right.GenCode();
-
             string trueLeft, falseLeft, endLeft;
             trueLeft = Compiler.NewTemp();
             trueLeft = trueLeft.Remove(0, 1);
@@ -75,6 +76,9 @@ namespace Compiler.AST
             string res = Compiler.NewTemp();
             Compiler.EmitCode("{0} = alloca i1", res);
 
+            string ll, rr, t1, t2;
+            t1 = left.GenCode();
+
             switch (op)
             {
                 case LogicalType.Or:
@@ -83,6 +87,7 @@ namespace Compiler.AST
                     Compiler.EmitCode($"br i1 {ll}, label %{trueLeft}, label %{falseLeft}");
 
                     Compiler.EmitCode($"{trueLeft}:");              // left is false
+                    t2 = right.GenCode();
                     rr = Compiler.NewTemp();
                     Compiler.EmitCode("{0} = icmp eq i1 true, {1}", rr, t2);
                     Compiler.EmitCode($"br i1 {rr}, label %{trueRight}, label %{falseRight}");
@@ -110,6 +115,7 @@ namespace Compiler.AST
                     Compiler.EmitCode($"br i1 {ll}, label %{trueLeft}, label %{falseLeft}");
                     
                     Compiler.EmitCode($"{trueLeft}:");              //left is true
+                    t2 = right.GenCode();
                     rr = Compiler.NewTemp();
                     Compiler.EmitCode("{0} = icmp eq i1 true, {1}", rr, t2);
                     Compiler.EmitCode($"br i1 {rr}, label %{trueRight}, label %{falseRight}");
@@ -132,10 +138,12 @@ namespace Compiler.AST
                     Compiler.EmitCode($"{endLeft}:");
                     break;
                 default:
-                    break;
+                    throw new ErrorException($"internal gencode error", false);
             }
 
-            return res;
+            string tt = Compiler.NewTemp();
+            Compiler.EmitCode("{0} = load i1, i1* {1}", tt, res);
+            return tt;
         }
 
         public override void Print(string delim)

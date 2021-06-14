@@ -35,10 +35,10 @@ namespace Compiler.AST
             string rr = right.CheckType();
 
             if (ll == null || rr == null)
-                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for arithmetic operator in line {line}!", false);
 
             if (ll == "bool" || rr == "bool")
-                throw new ErrorException($"Inappropriate types for arithmetic operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for arithmetic operator in line {line}!", false);
 
             type = ll == rr ? ll : "double";
             return type;

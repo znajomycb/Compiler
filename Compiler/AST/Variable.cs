@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Compiler.AST
 {
+
     public class Variable : SyntaxTree
     {
         public string value;

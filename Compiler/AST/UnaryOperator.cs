@@ -29,34 +29,33 @@ namespace Compiler.AST
         public override string CheckType()
         {
             string ll = exp.CheckType();
-
             if (ll == null)
-                throw new ErrorException($"Inappropriate type for unary operator in line {line}", false);
+                throw new ErrorException($"semantic error - invalid operand type for unary operator in line {line}!", false);
 
             switch (op)
             {
                 case UnaryType.Minus:
                     if (ll == "bool")
-                        throw new ErrorException($"Inappropriate type for unary minus operator in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '-' cannot be applied in line {line}!", false);
                     break;
                 case UnaryType.BitNot:
                     if (ll == "double" || ll == "bool")
-                        throw new ErrorException($"Inappropriate type for bit negation operator in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '~' cannot be applied in line {line}!", false);
                     break;
                 case UnaryType.Not:
                     if (ll == "int" || ll == "double")
-                        throw new ErrorException($"Inappropriate type for logical negation operator in line {line}", false);
+                        throw new ErrorException($"semantic error - operator '!' cannot be applied in line {line}!", false);
                     break;
                 case UnaryType.ToInt:
                     ll = "int";
                     break;
                 case UnaryType.ToDouble:
                     if (ll == "bool")
-                        throw new ErrorException($"Inappropriate type for conversation to double operator in line {line}", false);
+                        throw new ErrorException($"semantic error - cast to 'double' cannot be applied in line {line}!", false);
                     ll = "double";
                     break;
                 default:
-                    throw new ErrorException($"Inappropriate type for unary operator in line {line}", false);
+                    throw new ErrorException($"semantic error - invalid operand type for unary operator in line {line}!", false);
             }
 
             type = ll;
@@ -74,7 +73,7 @@ namespace Compiler.AST
             
             tw = Compiler.NewTemp();
             t2 = exp.GenCode();
-            //invalid operand type for instrcution
+            
             switch (op)
             {
                 case UnaryType.Minus:
@@ -108,21 +107,21 @@ namespace Compiler.AST
                     Compiler.EmitCode("{0} = load i1, i1* {0}$", tw);
                     break;
                 case UnaryType.ToInt:
-                    if (type == "int")
+                    if (exp.type == "int")
                         tw = t2;
-                    if (type == "double")
+                    if (exp.type == "double")
                         Compiler.EmitCode("{0} = fptosi double {1} to i32", tw, t2);
-                    if (type == "bool")
+                    if (exp.type == "bool")
                         Compiler.EmitCode("{0} = zext i1 {1} to i32", tw, t2);
                     break;
                 case UnaryType.ToDouble:
-                    if (type == "int")
+                    if (exp.type == "int")
                         Compiler.EmitCode("{0} = sitofp i32 {1} to double", tw, t2);
                     else
                         tw = t2;
                     break;
                 default:
-                    break;
+                    throw new ErrorException($"internal gencode error", false);
             }
 
             return tw;

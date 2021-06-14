@@ -28,17 +28,17 @@ namespace Compiler.AST
         {
             string tt = Compiler.GetIdentType(ident);
             if (tt == null)
-                throw new ErrorException($"Undeclared variable");
+                throw new ErrorException($"semantic error - variable '{ident}' is not declared!", false);
             
             switch (op)
             {
                 case ReadType.Decimal:
                     if (tt == "bool")
-                        throw new ErrorException($"Inappropriate type for read instruction in line {line}", false);
+                        throw new ErrorException($"semantic error - invalid type for 'read' instruction in line {line}!", false);
                     break;
                 case ReadType.Hexadecimal:
                     if (tt != "int")
-                        throw new ErrorException($"Inappropriate type for read (hex) instruction in line {line}", false);
+                        throw new ErrorException($"semantic error - invalid type for 'read' instruction in line {line}!", false);
                     break;
                 default:
                     break;
@@ -67,7 +67,7 @@ namespace Compiler.AST
                     Compiler.EmitCode("call i32 (i8*, ...) @scanf(i8* bitcast ([3 x i8]* @readIntHex to i8*), i32* %{0}$)", ident);
                     break;
                 default:
-                    break;
+                    throw new ErrorException($"internal gencode error", false);
             }
 
             return null;

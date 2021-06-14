@@ -20,7 +20,7 @@ namespace Compiler.AST
         {
             string tt = Compiler.GetIdentType(name);
             if (tt != null)
-                throw new ErrorException($"Variable already declared", false);
+                throw new ErrorException($"semantic error - variable '{name}' is already declared!", false);
 
             return type;
         }

@@ -5,8 +5,8 @@
 {
     public string val;
     public SyntaxTree node;
-    public List<SyntaxTree> node_s;
     public List<string> name_s;
+    public List<SyntaxTree> node_s;
 }
 
 %token Program Eof Return
@@ -24,7 +24,7 @@
 %token <val> Ident IntNumber IntNumberHex DoubleNumber Literal
 %token Error
 
-%type <node_s> block body
+%type <node_s> block main
 %type <node> inst_block
 %type <node_s> inst_s
 %type <node> read write return
@@ -39,25 +39,22 @@
 start   
     :   Program block Eof
         {
-            Console.WriteLine("Here is a program!");
             YYACCEPT;
         }
     |   Program error_eof
         {   
-            PrintSyntaxError("Syntax error in line", @2.StartLine);
-            Console.WriteLine("AAAAA");
+            PrintError("\t" + "syntax error - syntax error occurred in line", @2.StartLine);
             YYABORT;
         }
     |   error_eof
         {
-            PrintSyntaxError("The starting word is missing");
-            Console.WriteLine("BBBBBB");
+            PrintError("\t" + "syntax error - the starting word is missing");
             YYABORT;
         }
     ;
 
 block   
-    :   OpenCurly body CloseCurly
+    :   OpenCurly main CloseCurly
         {
             $$ = $2;
             Compiler.code = $2;
@@ -65,19 +62,18 @@ block
                 Print(x);
             }
         }
-    |   OpenCurly CloseCurly
-        {}
+    |   OpenCurly CloseCurly {}
     ;
 
-body    
-    :   body declar 
+main    
+    :   main declar 
         { 
             foreach (var x in $2) {
                 $1.Add(x);
             }
             $$ = $1;
         }
-    |   body statement 
+    |   main statement 
         {
             $1.Add($2);
             $$ = $1;
@@ -99,7 +95,9 @@ declar
             $$ = new List<SyntaxTree>();
             var node = $2;
             foreach (var x in node) {
-                $$.Add(new Declar($1, x));
+                var id = new Declar($1, x);
+                id.CheckType();
+                $$.Add(id);
                 Compiler.table.Add(x, $1);
             }
         }
@@ -229,10 +227,12 @@ write
     |   Write Literal SemiColon
         {
             $$ = new Write($2, @1.StartLine);
-            $$.CheckType();
-            string tt = Compiler.NewTemp();
-            tt = "@" + tt.Substring(1);
-            Compiler.literal.Add($2, tt);
+            if (!Compiler.literal.ContainsKey($2)) 
+            {
+                string tt = Compiler.NewTemp();
+                tt = "@" + tt.Substring(1);
+                Compiler.literal.Add($2, tt);
+            }
         }
     ;
 
@@ -406,6 +406,11 @@ factor
         {
             $$ = new Variable("int", $1);
         }
+    |   IntNumberHex 
+        {   
+            string value = Convert.ToInt32($1, 16).ToString();
+            $$ = new Variable("int", value);
+        }
     |   DoubleNumber
         {
             $$ = new Variable("double", $1);
@@ -437,7 +442,11 @@ error_eof
         node.Print(delim);
     }
 
-    public void PrintSyntaxError(string message, int line = -1) {
+    public void PrintError(string message, int line = -1) {
         ++Compiler.errors;
-        Console.WriteLine(message + " " + line);
+
+        if (line != -1)
+            Console.WriteLine(message + " " + line + "!");
+        else
+            Console.WriteLine(message + "!");
     }
