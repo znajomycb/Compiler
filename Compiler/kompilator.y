@@ -41,14 +41,19 @@ start
         {
             YYACCEPT;
         }
-    |   Program error_eof
+    |   Program error Eof
         {   
             PrintError("\t" + "syntax error - syntax error occurred in line", @2.StartLine);
             YYABORT;
         }
-    |   error_eof
+    |   error Eof
         {
             PrintError("\t" + "syntax error - the starting word is missing");
+            YYABORT;
+        }
+    |   Eof
+        {
+            PrintError("\t" + "syntax error - unexpected symbol Eof");
             YYABORT;
         }
     ;
@@ -422,13 +427,6 @@ factor
     |   False
         {
             $$ = new Variable("bool", "false");
-        }
-    ;
-
-error_eof
-    :   error Eof
-        {
-            Console.WriteLine(@1.StartLine + " " + @1.EndLine + " " + @1.StartColumn + " " + @1.EndColumn);
         }
     ;
 
