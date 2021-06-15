@@ -111,12 +111,11 @@ namespace Compiler.AST
                     break;
                 case WriteType.Literal:
                     string ident = Compiler.GetLiteralId(literal);
+                    int nl = Compiler.CountSubOcc(literal, "\\n");
                     if (ident != null)
                     {
                         string tw = Compiler.NewTemp();
-                        int len = literal.Length - 1;
-                        if (literal == "\"\\n\"") 
-                            len = 2;
+                        int len = literal.Length - 1 - nl;
  
                         Compiler.EmitCode("{0} = getelementptr [{1} x i8], [{1} x i8]* {2}, i32 0, i32 0", tw, len, ident);
                         Compiler.EmitCode("call i32 (i8 *, ...) @printf(i8* {0})", tw);

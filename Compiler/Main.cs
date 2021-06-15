@@ -119,18 +119,43 @@ namespace Compiler
             foreach (var x in literal)
             {
                 string str = x.Key;
-                int len = str.Length - 1;
-                if (str == "\"\\n\"")
+                int nl = 0;
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i < str.Length - 1; i++)
                 {
-                    str = "\"\\0A\\00\"";
-                    len = 2;
-                } 
-                else
-                {
-                    str = str.Substring(0, len) + "\\00\"";
+                    if (str[i] == '\\')
+                    {
+                        sb.Append('\\');
+                        if (i + 1 < str.Length - 1 && str[i + 1] == 'n')
+                        {
+                            sb.Append("0A");
+                            nl++;
+                            i++;
+                        }
+                        else
+                            sb.Append("5C");
+                    } 
+                    else
+                        sb.Append(str[i]);
                 }
+
+                string foo = sb.ToString();
+                sb.Clear();
+
+                for (int i = 0; i < foo.Length; i++)
+                {
+                    if (foo[i] == '\"')
+                        sb.Append("\\22");
+                    else
+                        sb.Append(foo[i]);
+                }
+
+                string bar = "\"" + sb.ToString() + "\\00\"";
+                int len = str.Length - 1 - nl;
                 string tt = x.Value;
-                EmitCode("{0} = private constant [{1} x i8] c{2}", tt, len, str);
+
+                EmitCode("{0} = private constant [{1} x i8] c{2}", tt, len, bar);
             }
 
             EmitCode("define i32 @main()");
@@ -141,6 +166,19 @@ namespace Compiler
 
             EmitCode("ret i32 0");
             EmitCode("}");
+        }
+
+        public static int CountSubOcc(string text, string pattern)
+        {
+            int count = 0;
+            int i = 0;
+            while ((i = text.IndexOf(pattern, i)) != -1)
+            {
+                i += pattern.Length;
+                count++;
+            }
+
+            return count;
         }
 
         public static string GetIdentType(string name)
