@@ -57,5 +57,4 @@ Literal			\"(\\.|[^\n\\"])*\"
 "\t"			{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
 {Comment}		{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
 {Endl}			{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); }
-.				{ Console.WriteLine("Error: " + yytext);
-yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Error; }
+.				{ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Error; }

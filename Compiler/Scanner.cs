@@ -6,9 +6,9 @@
 //
 //  GPLEX Version:  1.2.2
 //  Machine:  DESKTOP-UBLKNJO
-//  DateTime: 6/10/2021 21:15:25
+//  DateTime: 6/15/2021 17:03:14
 //  UserName: tourist
-//  GPLEX input file <.\kompilator.lex - 6/10/2021 18:19:21>
+//  GPLEX input file <.\kompilator.lex - 6/15/2021 17:00:13>
 //  GPLEX frame file <embedded resource>
 //
 //  Option settings: parser, minimize
@@ -1001,7 +1001,6 @@ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.E
         case 1:
         case 4:
         case 7:
-Console.WriteLine("Error: " + yytext);
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.Error;
             break;
         case 2:
@@ -1167,20 +1166,17 @@ yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.L
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.DoubleNumber;
             break;
         case 86:
-Console.WriteLine("Inthex: " + yytext);
-	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntNumberHex;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.IntNumberHex;
             break;
         case 87:
 _yytrunc(1); 
-Console.WriteLine("Comment");
-	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol);
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol);
             break;
         case 88:
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.And;
             break;
         case 89:
-Console.WriteLine("Literal string: " + yytext);
-	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.Literal;
+yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); yylval.val = yytext; return (int)Tokens.Literal;
             break;
         case 90:
 yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol); return (int)Tokens.NotEqual;
