@@ -235,13 +235,7 @@ namespace Compiler
         Write
     }
 
-    public enum IdentType
-    {
-        Int,
-        Double,
-        Bool
-    }
-
+    #region AST
     public abstract class SyntaxTree
     {
         public ElementType elementType;
@@ -252,7 +246,9 @@ namespace Compiler
         public abstract string GenCode();
         public abstract void Print(string delim);
     }
+    #endregion
 
+    #region Error
     class ErrorException : ApplicationException
     {
         public readonly bool Recovery;
@@ -260,4 +256,5 @@ namespace Compiler
         public ErrorException(string msg, bool rec = true) : base(msg) { ++Compiler.errors; Recovery = rec; }
         public ErrorException(string msg, Exception ex, bool rec = true) : base(msg, ex) { ++Compiler.errors; Recovery = rec; }
     }
+    #endregion
 }
